@@ -1,12 +1,19 @@
 # Ignored files
 
-**/*.mat # data files
-**/*.pdf # exported figures
-**/*.png # exported figures
-**/*.jpg # exported figures
-**/*.asv # matlab autosave
-**/*~    # emacs autosave
-**/*.mexa64 # compiled matlab
-codegen/ # compiled matlab
-**/*.log # relative to matlab compilation
-**/*.prj # relative to matlab compilation
+# data files
+**/*.mat
+
+# exported figures
+**/*.pdf 
+**/*.png 
+**/*.jpg 
+
+# Autosave files
+**/*.asv 
+**/*~
+
+# Compilation files
+**/*.mexa64
+codegen/
+**/*.log
+**/*.prj
