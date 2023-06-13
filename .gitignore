@@ -4,9 +4,10 @@
 **/*.mat
 
 # exported figures
-**/*.pdf 
-**/*.png 
-**/*.jpg 
+**/*.pdf
+**/*.png
+**/*.jpg
+**/*.gif
 
 # Autosave files
 **/*.asv 
