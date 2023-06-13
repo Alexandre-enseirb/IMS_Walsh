@@ -1,0 +1,2 @@
+restoredefaultpath; clear RESTOREDEFAULTPATH_EXECUTED;
+addpath("data", "functions", "generators", 'libcom', "libhilbert", "libplot", "libsig", "libsim", "libwalsh", "libwalsh/mod", "libpseudosemantic", "visuals");
