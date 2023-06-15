@@ -126,7 +126,7 @@ sigRecFFT = fftshift(fft(sWalsh, params.Nfft));
 sigRecPow = abs(sigRecFFT).^2;
 sigRecdB  = 10*log10(sigRecPow/max(sigRecPow));
 
-if ~isConform(sigRecdB(nullFrequencyIdx:maxConformFrequency), params.BW_visible(nullFrequencyIdx:maxConformFrequency).')
+if ~isConform(sigRecdB(params.nullFrequencyIdx:params.maxConformFrequency), params.BW_visible(params.nullFrequencyIdx:params.maxConformFrequency).')
     nNotConform = 1;
 end
 
