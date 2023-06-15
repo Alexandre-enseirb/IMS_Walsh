@@ -29,8 +29,8 @@ if strcmp(type, 'tx')
     params.samplesPerFrame = 1000;
     params.nFramesTx = 4000;
 else
-    params.samplesPerFrame = 10000;
-    params.nFramesTx = 4000;
+    params.samplesPerFrame = 100000;
+    params.nFramesTx = 400;
 end
 params.samplingFreq = rParams.MasterClockRate/rParams.InterpolationDecimationFactor;
 params.fse = params.samplesPerFrame/params.symbolsPerFrame;
