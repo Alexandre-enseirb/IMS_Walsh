@@ -23,3 +23,5 @@ codegen/
 Radios/rx_logs.txt
 Radios/test_tx.m
 Radios/test_log.txt
+Radios/rx_logs.txt
+Radios/tx_logs.txt
