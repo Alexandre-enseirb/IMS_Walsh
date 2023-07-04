@@ -5,7 +5,7 @@ vals = pskdemod(symbs, params.ModOrderQPSK, params.PhaseOffsetQPSK + phaseError,
 
 hatB = int2bit(vals, params.bpiqpsk, params.leftMSB);
 
-hatBDescrambled = descrambler(hatB(:));
+hatBDescrambled = descrambler(hatB(:), true);
 
 Bt = hatBDescrambled.';
 Bt = Bt(:).';
