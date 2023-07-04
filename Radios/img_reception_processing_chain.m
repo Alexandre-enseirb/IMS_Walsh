@@ -28,7 +28,7 @@ title("ImB2");
 close all; 
 % clock, pps, no burst
 sig = buffer2;
-sig = sig(2686690:end);
+sig = sig(2686720:end);
 
 % clock, pps, burst
 % sig = buffer2;
@@ -65,7 +65,7 @@ clear b01 b02;
 
 figure("Name", "Scatterplots", "Position", get(0, "ScreenSize"))
 for i=1:params.fse
-    subplot(2, 2, i)
+    subplot(4, 4, i)
     plot(real(sig(i+1000:params.fse:i+1300)./max(abs(sig))), imag(sig(i+1000:params.fse:i+1300)./max(abs(sig))), ' o');
     xlim([-1 1])
     ylim([-1 1])
