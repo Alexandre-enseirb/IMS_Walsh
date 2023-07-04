@@ -6,8 +6,8 @@ params.LOOffset = 0;              % Offset de l'oscillateur local
 params.enableBurstMode = false;   % Mode 'rafale'
 params.nFramesInBurstMode = 100;  % Nombre de frames par rafale
 params.dataType = 'int16';        % Type de donnees
-params.PPSSource = 'internal';    % Source de pulsations
-params.ClockSource = 'internal';  % Source d'horloge
+params.PPSSource = 'external';    % Source de pulsations
+params.ClockSource = 'external';  % Source d'horloge
 params.MasterClockRate = 10e6;    % Rythme de travail de la radio
 params.InterpolationFactor = 4;  % Facteur d'interpolation de l'emetteur
 params.DecimationFactor = 4;     % Facteur de decimation du recepteur
@@ -22,7 +22,7 @@ if strcmpi(radioType, 'tx')
     params.InterpolationDecimationFactor = params.InterpolationFactor; % pour la retrocompatibilite du code
 elseif strcmpi(radioType, 'rx')
     % Parametres specifiques au recepteur
-    params.Gain = 25;
+    params.Gain = 27;
     params.ChannelMapping = 1;
     params.InterpolationDecimationFactor = params.DecimationFactor; % pour la retrocompatibilite du code
 end
