@@ -19,7 +19,7 @@ params = genParamsOSDM(2.4825e9, ...
     400);
 
 M            = 6; % 64-QAM, 6 bits par symbole
-carrier_name = sprintf("data/walsh_carrier_%d@%d_Hz_fd.mat", params.BW_middle_freq, params.fech);
+carrier_name = sprintf("data/walsh_carrier_%d@%d_Hz_fd.mat", params.BW.middleFreq, params.fech);
 
 figurePos = getFigPosition(); % Position and size of plots
 
@@ -55,7 +55,7 @@ delay = 2*delay + 1;
 
 
 totalDuration    = ceil((nSymbOSDMTx/realDs)*params.fech); % signal duration
-symbOSDMDuration = totalDuration/(params.nCoeff*params.osr);
+symbOSDMDuration = totalDuration/(params.nCoeffs*params.osr);
 timeAxis         = (1:totalDuration)/params.fech;
 
 freqAxis = params.freq_axis;
@@ -170,7 +170,7 @@ for iC2Size = 1:nC2Sizes
                     coeffsReception = dwt(y(1:params.osr:end) * attenuationFactors(iAttenuation), params.W, params.order, true);
 
                     % DAC
-                    coeffsReception = quantification(coeffsReception, params.nBitsAmp, params.max_bin);
+                    coeffsReception = quantification(coeffsReception, params.nBitsAmp, params.maxBin);
 
                     % Reconstruction numerique du signal
 

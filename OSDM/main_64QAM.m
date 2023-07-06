@@ -19,7 +19,7 @@ params = genParamsOSDM(2.4825e9, ...
     400);
 
 M            = 6; % 64-QAM, 6 bits par symbole
-carrier_name = sprintf("data/walsh_carrier_%d@%d_Hz_fd.mat", params.BW_middle_freq, params.fech);
+carrier_name = sprintf("data/walsh_carrier_%d@%d_Hz_fd.mat", params.BW.middleFreq, params.fech);
 
 figurePos = getFigPosition(); % Position and size of plots
 
@@ -55,7 +55,7 @@ delay = 2*delay + 1;
 
 
 totalDuration    = ceil((nSymbOSDMTx/realDs)*params.fech); % signal duration
-symbOSDMDuration = totalDuration/(params.nCoeff*params.osr);
+symbOSDMDuration = totalDuration/(params.nCoeffs*params.osr);
 timeAxis         = (1:totalDuration)/params.fech;
 
 freqAxis = params.freq_axis;
@@ -145,7 +145,7 @@ y = sWalsh + b;
 coeffsReception = dwt(y(1:params.osr:end) * attenuationFactor, params.W, params.order, true);
 
 % DAC
-coeffsReception = quantification(coeffsReception, params.nBitsAmp, params.max_bin);
+coeffsReception = quantification(coeffsReception, params.nBitsAmp, params.maxBin);
 
 % Reconstruction numerique du signal
 
@@ -155,12 +155,16 @@ walshCarrier  = walsh(carrierCoeffs, params.W, params.Nfft, params.osr, false);
 Wcosine       = real(walshCarrier.temporel).';
 Wsine         = imag(walshCarrier.temporel).';
 
+% Extraction de la "partie utile"
+Wcosine = Wcosine(1:size(coeffsReception, 2));
+Wsine = Wsine(1:size(coeffsReception, 2));
+
 % Recuperation de l'enveloppe complexe par Hilbert
 Xw_TxImag = hilbertWalsh(coeffsReception, params.W);
 
 % Generation des signaux I/Q
-Xw_TxCI = coeffsReception(modulatedCoeffs,:) .* Wcosine(1:length(coeffsReception)) + Xw_TxImag(modulatedCoeffs, :).* Wsine(1:length(coeffsReception));
-Xw_TxCQ = Xw_TxImag(modulatedCoeffs, :).* Wcosine(1:length(coeffsReception)) - coeffsReception(modulatedCoeffs,:).* Wsine(1:length(coeffsReception));
+Xw_TxCI = coeffsReception(modulatedCoeffs,:) .* Wcosine + Xw_TxImag(modulatedCoeffs, :).* Wsine;
+Xw_TxCQ = Xw_TxImag(modulatedCoeffs, :).* Wcosine - coeffsReception(modulatedCoeffs,:).* Wsine;
 
 % Combinaison des signaux, compensation et extraction des coeffs d'interet
 Xw_TxCSymb                  = (Xw_TxCI + 1j*Xw_TxCQ);
