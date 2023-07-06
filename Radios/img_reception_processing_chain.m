@@ -45,7 +45,11 @@ fech      = params.samplingFreq;      % Sampling frequency, Hz
 Nfft      = 2^14;                                   % fft points 
 M = 4;
 
-descrambler = comm.Descrambler(params.scramblerBase, params.scramblerPolynomial, params.scramblerInitState);
+descrambler = comm.Descrambler( ...
+    "CalculationBase", params.scramblerBase, ...
+    "Polynomial", params.scramblerPolynomial, ...
+    "InitialConditions", params.scramblerInitState, ...
+    "ResetInputPort", params.scramblerResetPort);
 
 % g = rcosdesign(roll_off, span, sps, 'sqrt');
 g = params.g;
@@ -66,7 +70,7 @@ clear b01 b02;
 figure("Name", "Scatterplots", "Position", get(0, "ScreenSize"))
 for i=1:params.fse
     subplot(4, 4, i)
-    plot(real(sig(i+1000:params.fse:i+1300)./max(abs(sig))), imag(sig(i+1000:params.fse:i+1300)./max(abs(sig))), ' o');
+    plot(real(sig(i+1000:params.fse:i+1300).^4./max(abs(sig.^4))), imag(sig(i+1000:params.fse:i+1300).^4./max(abs(sig.^4))), ' o');
     xlim([-1 1])
     ylim([-1 1])
     axis square
