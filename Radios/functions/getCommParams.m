@@ -64,7 +64,7 @@ params.OSDM.RefreshPerSymbol = 10; % Nombre de rafraichissements necessaires a u
                                  % Aussi, plus on fait de repetitions, plus on a d'echantillons de notre
                                  % symbole pour faire un codage par repetition
 params.OSDM.SymbolsRate = params.samplingFreq/(64*params.OSDM.RefreshPerSymbol*wParams.osr);
-params.OSDM.grayscaleValues = [0 255];
+params.OSDM.grayscaleValues = 0:255;
 params.OSDM.QPSKValues = pskmod([0 1 2 3], params.ModOrderQPSK, params.PhaseOffsetQPSK, "gray");
 params.OSDM.QAMValues = qammod(0:63, params.ModOrder64QAM, "gray");
 end
