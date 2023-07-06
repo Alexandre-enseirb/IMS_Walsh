@@ -77,8 +77,8 @@ end
 params.Nfft_order = Nfft_order;
 params.Nfft       = 2^params.Nfft_order;
 
-params.freq_axis      = -params.fech/2:params.fech/params.Nfft:params.fech/2-params.fmax/params.Nfft;
-params.norm_freq_axis = params.freq_axis/params.fech;
+params.freqAxis      = -params.fech/2:params.fech/params.Nfft:params.fech/2-params.fmax/params.Nfft;
+params.norm_freqAxis = params.freqAxis/params.fech;
 
 
 %% Parametres temporels
@@ -93,8 +93,8 @@ params.TRefresh_e = params.TRefresh_s * params.fech; % echantillons
 
 %% PARAMETRES CONFORMATION
 
-params.rounded_BW1 = floor(params.BW.usedInterval(1)*params.freq_axis(end))/params.freq_axis(end);
-params.rounded_BW2 = floor(params.BW.usedInterval(2)*params.freq_axis(end))/params.freq_axis(end);
+params.rounded_BW1 = floor(params.BW.usedInterval(1)*params.freqAxis(end))/params.freqAxis(end);
+params.rounded_BW2 = floor(params.BW.usedInterval(2)*params.freqAxis(end))/params.freqAxis(end);
 params.diff_BW     = params.rounded_BW2 - params.rounded_BW1;
 
 params.bw_axis                = params.rounded_BW1:params.fech/params.Nfft:params.rounded_BW2; % toutes les frequences a utiliser
@@ -106,22 +106,22 @@ params.duration = params.nWalsh * params.TWalsh_s * params.nCoeffs; % s
 params.Nech     = params.duration/params.Tech_s; % Nb d'echantillons
 params.Tse      = 1/params.osr;      % temps entre deux ech. de Walsh
 
-params.time_axis                                                                     = 0:params.Tech_s:params.duration-params.Tech_s;
-params.walsh_time_axis                                                               = 0:params.TWalsh_s:params.duration - params.TWalsh_s;
+params.timeAxis                                                                     = 0:params.Tech_s:params.duration-params.Tech_s;
+params.walsh_timeAxis                                                               = 0:params.TWalsh_s:params.duration - params.TWalsh_s;
 
 % Pour afficher le masque sur les plots
-params.BW_visible                                                                    = -25*ones(size(params.freq_axis));
-params.BW_visible( params.freq_axis > params.BW.span(1) & params.freq_axis < params.BW.span(2)) = 0;
-params.BW_visible((params.freq_axis > params.BW.span(2)            & params.freq_axis < params.BW.first_oob(2))  | (params.freq_axis < params.BW.span(1) & params.freq_axis            > params.BW.first_oob(1)))  = -13;
-params.BW_visible((params.freq_axis > params.BW.first_oob(2)  & params.freq_axis < params.BW.second_oob(2)) | (params.freq_axis < params.BW.first_oob(1) & params.freq_axis  > params.BW.second_oob(1))) = -10;
-params.BW_visible((params.freq_axis > params.BW.second_oob(2) & params.freq_axis < params.BW.third_oob(2))  | (params.freq_axis < params.BW.second_oob(1) & params.freq_axis > params.BW.third_oob(1)))  = -13;
+params.BW_visible                                                                    = -25*ones(size(params.freqAxis));
+params.BW_visible( params.freqAxis > params.BW.span(1) & params.freqAxis < params.BW.span(2)) = 0;
+params.BW_visible((params.freqAxis > params.BW.span(2)            & params.freqAxis < params.BW.first_oob(2))  | (params.freqAxis < params.BW.span(1) & params.freqAxis            > params.BW.first_oob(1)))  = -13;
+params.BW_visible((params.freqAxis > params.BW.first_oob(2)  & params.freqAxis < params.BW.second_oob(2)) | (params.freqAxis < params.BW.first_oob(1) & params.freqAxis  > params.BW.second_oob(1))) = -10;
+params.BW_visible((params.freqAxis > params.BW.second_oob(2) & params.freqAxis < params.BW.third_oob(2))  | (params.freqAxis < params.BW.second_oob(1) & params.freqAxis > params.BW.third_oob(1)))  = -13;
 
 params.max_coeff = zeros(size(params.bw_axis));    % coeff max par frequence
 
-params.middle = find(params.freq_axis == 0);
-params.start  = find(params.freq_axis > params.BW.span(1), 1);
-params.stop   = find(params.freq_axis > params.BW.span(2), 1) - 1;
-params.fs2    = find(params.freq_axis > params.fWalsh/2, 1) - 1;
+params.middle = find(params.freqAxis == 0);
+params.start  = find(params.freqAxis > params.BW.span(1), 1);
+params.stop   = find(params.freqAxis > params.BW.span(2), 1) - 1;
+params.fs2    = find(params.freqAxis > params.fWalsh/2, 1) - 1;
 
 %% PARAMETRES OSDM
 

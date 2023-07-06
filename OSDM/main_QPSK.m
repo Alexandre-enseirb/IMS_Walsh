@@ -19,7 +19,7 @@ params = genParamsOSDM(2.4825e9, ...
     400);
 
 M            = 4; % QPSK, 4 bits par symbole
-carrier_name = sprintf("data/walsh_carrier_%d@%d_Hz_fd.mat", params.BW_middle_freq, params.fech);
+carrier_name = sprintf("data/walsh_carrier_%d@%d_Hz_fd.mat", params.BW.middleFreq, params.fech);
 
 figurePos = getFigPosition(); % Position and size of plots
 
@@ -55,13 +55,13 @@ delay = 2*delay + 1;
 
 
 totalDuration    = ceil((nSymbOSDMTx/realDs)*params.fech); % signal duration
-symbOSDMDuration = totalDuration/(params.nCoeff*params.osr);
+symbOSDMDuration = totalDuration/(params.nCoeffs*params.osr);
 timeAxis         = (1:totalDuration)/params.fech;
 
-freqAxis = params.freq_axis;
+freqAxis = params.freqAxis;
 
-nullFrequencyIdx    = ceil(length(params.freq_axis)/2);
-maxConformFrequency = find(params.freq_axis > params.fWalsh/2, 1);
+nullFrequencyIdx    = ceil(length(params.freqAxis)/2);
+maxConformFrequency = find(params.freqAxis > params.fWalsh/2, 1);
 if isempty(maxConformFrequency)
     maxConformFrequency = params.Nfft;
 end
@@ -141,7 +141,7 @@ y = sWalsh + b;
 coeffsReception = dwt(y(1:params.osr:end) * attenuationFactor, params.W, params.order, true);
 
 % DAC
-coeffsReception = quantification(coeffsReception, params.nBitsAmp, params.max_bin);
+coeffsReception = quantification(coeffsReception, params.nBitsAmp, params.maxBin);
 
 % Reconstruction numerique du signal
 
@@ -187,9 +187,9 @@ bitErrors = sum(symbolsTxBinary~=symbolsRxBinary, "all");
 %% AFFICHAGE
 
 figure("Name", "Spectrum", "Position", figurePos)%, "Resize", "off")
-plot(params.freq_axis, sigRecdB, "DisplayName", "Semantic signal", "LineWidth", 4);
+plot(params.freqAxis, sigRecdB, "DisplayName", "Semantic signal", "LineWidth", 4);
 hold on; grid on;
-plot(params.freq_axis, params.BW_visible, "DisplayName", "Mask", "LineWidth", 4, "LineStyle", "--");
+plot(params.freqAxis, params.BW_visible, "DisplayName", "Mask", "LineWidth", 4, "LineStyle", "--");
 xlim([0 4e9]);
 xlabel("Frequency, Hz", "FontSize", 22, "Interpreter", "latex");
 ylabel("Power, dB", "FontSize", 22, "Interpreter", "latex");
@@ -199,10 +199,10 @@ axh.FontSize = 22;
 exportgraphics(axh, "visuals/Cluster_2_size_20_spurs.pdf");
 
 figure("Name", "Coeffs", "Position", figurePos)%, "Resize", "off")
-plot(params.freq_axis, abs(fftshift(fft(params.W(modulatedCoeffs(1),:), params.Nfft))), "DisplayName", string(modulatedCoeffs(1)), "LineWidth", 4);
+plot(params.freqAxis, abs(fftshift(fft(params.W(modulatedCoeffs(1),:), params.Nfft))), "DisplayName", string(modulatedCoeffs(1)), "LineWidth", 4);
 hold on; grid on;
-plot(params.freq_axis, abs(fftshift(fft(params.W(modulatedCoeffs(2),:), params.Nfft))), "DisplayName", string(modulatedCoeffs(2)), "LineWidth", 4);
-plot(params.freq_axis, abs(fftshift(fft(params.W(modulatedCoeffs(3),:), params.Nfft))), "DisplayName", string(modulatedCoeffs(3)), "LineWidth", 4);
+plot(params.freqAxis, abs(fftshift(fft(params.W(modulatedCoeffs(2),:), params.Nfft))), "DisplayName", string(modulatedCoeffs(2)), "LineWidth", 4);
+plot(params.freqAxis, abs(fftshift(fft(params.W(modulatedCoeffs(3),:), params.Nfft))), "DisplayName", string(modulatedCoeffs(3)), "LineWidth", 4);
 legend("Interpreter", "latex", "FontSize", 22)
 axh = gca;
 xlabel("Frequency, Hz", "FontSize", 22, "Interpreter", "latex");

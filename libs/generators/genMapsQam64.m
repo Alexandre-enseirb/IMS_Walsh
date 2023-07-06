@@ -22,7 +22,7 @@ maps.mapping_m = mapping_m;
 
 
 
-maps.sinewave = sin(2*pi*f*params.time_axis);
+maps.sinewave = sin(2*pi*f*params.timeAxis);
 
 maps.Xw_b = cell(1,64);
 
