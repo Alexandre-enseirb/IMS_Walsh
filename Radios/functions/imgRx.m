@@ -1,13 +1,15 @@
 function [status] = imgRx(mflag)
 
+disp("Setting up.");
 radioParams = getRadioParams('rx');
 commParams  = getCommParams('rx');
+walshParams = getWalshParams();
 
 status = 0;
 
-filenames = ["img_rx_no_clock_no_pps_rrc.mat", ...
-             "img_rx_clock_no_pps_rrc.mat", ...
-             "img_rx_clock_pps_rrc.mat"];
+filenames = ["walsh_img_rx_no_clock_no_pps_rrc_osr_%d.mat", ...
+             "walsh_img_rx_clock_no_pps_rrc_osr_%d.mat", ...
+             "walsh_img_rx_clock_pps_rrc_osr_%d.mat"];
 
 radio = comm.SDRuReceiver("Platform", "B210", ...
     "SerialNum", "3218C8E", ...
@@ -38,16 +40,23 @@ else
     filename = filenames(1); % Nothing
 end
 
+%filename = sprintf(filename, walshParams.osr);
+filename = "img_rx_clock_pps_rrc.mat";
 
 data = zeros(1, 10000000);
 fprintf("[RX] Starting reception...\n");
 nOverrun = 0;
-
+disp("Setup done.");
 data_ = radio(); % call it once to initialize
 
 if strcmpi(radioParams.ClockSource, "external")
     lockedStatus = referenceLockedStatus(radio);
-    disp(lockedStatus);
+    if lockedStatus
+        disp("locked on ref");
+    else
+        disp("ERR! No ref available. aborting.");
+        exit;
+    end
 end
 
 i = 1;
@@ -59,7 +68,7 @@ buffer2 = zeros(datalength, nBufferWindows);
 timeout = -1;
 
 halfBufferWindows = nBufferWindows/2;
-
+disp("Start listening.");
 while true
 
     [buffer1(:, i), ~, overrun] = radio();
@@ -75,7 +84,7 @@ while true
 
     % Debut d'envoi ?
     if mflag.Data(1) == uint8(1)
-        disp("Listening.");
+        disp("Data detected.");
         timeout = nBufferWindows;
         mflag.Data(1) = uint8(0);
     end
@@ -89,7 +98,10 @@ while true
 
     % Sauvegarde une fois le timeout fini
     if timeout == 0
-        save(filename, "buffer1", "buffer2");
+        disp("Saving... Please do not turn off the script.");
+        save(filename, "buffer1", "buffer2", "commParams", "radioParams", "walshParams");
+        disp("Saving done. Exiting.");
+        exit;
     end
 
 end
