@@ -9,13 +9,12 @@ int_filter_b  = [0 1];   % coeff du numérateur du filtre intégrateur
 int_filter_a  = [1 -1];  % coeff du dénominateur du filtre intégrateur
 M = 4;
 
-rn = signal(startingSample:oversamplingRate:end);
+rn = signal(startingSample:oversamplingRate:end); % Sous-echantillonnage minimisant l'IES
 rn_M = rn.^M;                         % signal "rabattu"
 
 phases = zeros(length(rn_M), 1);        % phase de chaque symbole
 phases_exp = zeros(length(rn_M), 1);    % phase, comme exponentielle
 phases_exp_q = zeros(length(rn_M),1);   % quart de la phase
-corr   = zeros(length(rn_M), 1);        % signal corrigé (inutilisé)
 en     = zeros(length(rn_M), 1);        % valeurs de en
 vn     = zeros(length(rn_M), 1);        % valeurs de vn
 reg_loop=0;                           % registres
@@ -41,5 +40,4 @@ for i=1:length(rn_M)
     phases_exp_q(i) = exp(-1j * phase/M);
 end
 % 
-bup = signal;
 synchronizedSig = rn .* phases_exp_q.';

@@ -1,14 +1,15 @@
-function [sigRx, piloteRx, preamble] = fineTimeSynchronization(signal, modulationOrder, phaseOffset)
+function [sigRx, piloteRx, preambleSymb] = fineTimeSynchronization(signal, modulationOrder, phaseOffset)
 %FINETIMESYNCHRONIZATION trouve le debut du signal synchronise grossierement en utilisant le
 %preambule dans `bitSynchro.mat`.
 
-load bitSynchro.mat
+load("bitSynchro.mat", "bitSynchro");
 
-preamble = pskmod(bitSynchro, modulationOrder, phaseOffset, InputType="bit");
-N = length(preamble);
-p = intercorr(signal,preamble);
-[mval,midx] = max(abs(p));
+preambleSymb = pskmod(bitSynchro, modulationOrder, phaseOffset, InputType="bit"); % Preambule module
+N = length(preambleSymb);
 
-% récupération des 65536 symboles
-piloteRx = signal(midx:midx + N-1);
-sigRx = signal(midx+N:end);
+p = intercorr(signal, preambleSymb); % Calcul d'intercorrelation simplifie entre le signal et le preambule genere
+[~,midx] = max(abs(p));              % Recherche du maximum d'intercorrelation
+
+% recuperation des 65536 symboles
+piloteRx = sig(midx:midx + N-1); % Extraction du pilote
+sigRx = sig(midx+N:signal);         % Extraction de ce que l'on suppose etre l'image

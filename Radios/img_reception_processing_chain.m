@@ -1,11 +1,44 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Ce script realise la synchronisation manuelle d'un signal recu module en QPSK.
+%
+% Le signal recu doit contenir une trame avec les informations d'intensite en niveaux de gris d'une image 128x128
+% pixels. Si la trame est plus courte, l'imag esera zero-paddee. Si elle est trop longue, elle sera tronquee.
+%
+% La synchronisation manuelle se fait en plusieurs etapes :
+%
+%   - La selection d'un point de depart pour le signal dans l'un des deux buffers du recepteur. Ce point de depart
+%   doit etre choisi a moins de 2000 echantillons du preambule pour des resultats optimaux (zoomer et choisir un
+%   indice d'echantillon le plus proche possible)
+%   - La synchronisation temporelle grossiere : a partir des parametres de surechantillonnage fournis a la radio
+%   emetteur, le script propose des constellations pour chaque instant de surechantillonnage, et l'utilisateur
+%   choisit l'instant proposant la constellation la plus proche. Cela permet de minimiser l'Interference Entre Symboles
+%   (IES)
+%   - La synchronisation frequentielle grossiere consiste en une PLL "magique" qui elimine le decalage de phase sur le
+%   signal.
+%   - La synchronisation temporelle fine utilise le preambule (bitSynchro.mat) pour detecter le debut du signal par
+%   une formule d'intercorrelation simplifiee. /!\ En fonction de la facon dont a ete genere bitSynchro.mat, il est
+%   possible que ce preambule se retrouve dans le signal, creant un "faux positif" pour la detection du preambule.
+%   - La synchronisation frequentielle fine utilise le preambule detecte et le compare au preambule genere via
+%   bitSynchro.mat pour calculer le dephasage entre les deux constellations. Ce dephasage doit etre applique lors de la
+%   demodulation pour retrouver les symboles originaux.
+%
+% Enfin, l'image est restauree via une conversion des bits estimes en nouveaux pixels.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 clear; clc; close all; dbstop if error;
 
 setPath();
+
+%% CHOIX DU DEBUT DU SIGNAL
+
 load bitSynchro.mat
 file = "img_rx_no_clock_no_pps_rrc";
 
-load(file);
+load(file, "buffer1", "buffer2", "commParams");
 
+% Affichage des parties reelles et imaginaires des deux buffers.
+% Cette etape permet aussi de verifier qu'il n'y a pas eu saturation de l'ADC au recepteur
+% (amplitude du signal egale a 1), et d'ajuster en consequence le gain du recepteur.
 figure();
 subplot(2, 2, 1)
 plot(real(buffer1(:)));
@@ -23,37 +56,38 @@ subplot(2,2,4)
 plot(imag(buffer2(:)));
 title("ImB2");
 
-
 %%
-close all; 
-% clock, pps, no burst
+close all; % Fermeture du premier plot
+
+startIdx = 2686720; % A REMPLACER PAR LA VALEUR LUE DANS LA PREMIERE "PARTIE"
+
 sig = buffer2;
-sig = sig(2686720:end);
+sig = sig(startIdx:end);
 
-% clock, pps, burst
-% sig = buffer2;
-% sig = sig(1187140:end);
+%% CHARGEMENT DES PARAMETRES ET SYNCHRONISATION TEMPORELLE GROSSIERE
 
-% no clock, no pps
-% sig = buffer1;
-% sig = sig(593187:end);
+% Version "ancien recepteur" 
+if ~exist("commParams", "var")
+    commParams = getCommParams('rx'); % Parametres de la communication
+end
 
-%%
-params = getCommParams('rx'); % Params used during communication
+% Version "nouveau recepteur"
+% Rien a faire, commParams est deja dans le fichier de sauvegarde
 
-fech      = params.samplingFreq;      % Sampling frequency, Hz
-Nfft      = 2^14;                                   % fft points 
-M = 4;
+fech      = commParams.samplingFreq;  % frequence d'echantillonnage, Hz
+Nfft      = 2^14;                     % Nb de points de la FFT
+M = 4;                                % Ordre de la modulation (QPSK = 4)
 
+% Instantiation du descrambler
 descrambler = comm.Descrambler( ...
-    "CalculationBase", params.scramblerBase, ...
-    "Polynomial", params.scramblerPolynomial, ...
-    "InitialConditions", params.scramblerInitState, ...
-    "ResetInputPort", params.scramblerResetPort);
+    "CalculationBase", commParams.scramblerBase, ...         % Base de calcul (binaire, base 10...)
+    "Polynomial", commParams.scramblerPolynomial, ...        % Polynome du descrambler (branchement des memoires)
+    "InitialConditions", commParams.scramblerInitState, ...  % Contenu des memoires lors de l'instantiation du descrambler
+    "ResetInputPort", commParams.scramblerResetPort);        % Ajout d'un port "RESET" au descrambler
 
-% g = rcosdesign(roll_off, span, sps, 'sqrt');
-g = params.g;
-freqAxis = -fech/2 : fech/Nfft : fech/2 - fech/Nfft; % Frequency axis
+
+g = commParams.g; % Filtre de mise en forme utilise lors de la transmission
+freqAxis = -fech/2 : fech/Nfft : fech/2 - fech/Nfft; % Axe frequentiel pour la FFT
 
 alpha      = 1;      % constante de la boucle a verouillage de phase
 beta       = 1e-2;   % constante de la boucle a verouillage de phase
@@ -63,51 +97,45 @@ loop_filter_a = [1 -1];  % coeff du dénominateur du filtre de boucle
 int_filter_b  = [0 1];   % coeff du numérateur du filtre intégrateur
 int_filter_a  = [1 -1];  % coeff du dénominateur du filtre intégrateur
 
+% Filtrage adapte du signal recu
 sig = conv(sig, g);
 
-clear b01 b02;
+clear b01 b02; % liberation memoire
 
+% Synchro temporelle grossiere
 figure("Name", "Scatterplots", "Position", get(0, "ScreenSize"))
-for i=1:params.fse
-    subplot(4, 4, i)
-    plot(real(sig(i+1000:params.fse:i+1300).^4./max(abs(sig.^4))), imag(sig(i+1000:params.fse:i+1300).^4./max(abs(sig.^4))), ' o');
+for i=1:commParams.fse
+    subplot(4, 4, i) % /!\ les deux premieres valeurs du subplot doivent etre changees pour que leur produit soit inferieur ou egal a commParams.fse
+
+    % Affichage de la constellation, normalisee
+    % les ".^M" sont un test et peuvent etre retires
+    % Si le ".^M" est laisse, il faut voir l'instant ou un seul groupe de points est present
+    % S'il est retire, il faut en voir 4, comme dans une constellation de QPSK classique
+    plot(real(sig(i+1000:commParams.fse:i+1300).^M./max(abs(sig.^M))), ...
+         imag(sig(i+1000:commParams.fse:i+1300).^M./max(abs(sig.^M))), ' o');
     xlim([-1 1])
     ylim([-1 1])
     axis square
 end
-% figure("Name", "Sampling of received signal", "Position", get(0, "ScreenSize"))
-% plot(real(sig), "DisplayName", "Rx signal");
-% hold on; grid on;
-% stem(real(upsample(sig(30:40:end), 10)), "DisplayName", "Kept samples");
-% legend("Interpreter","latex", FontSize=22);
-% xlabel("Samples", FontSize=22, Interpreter="latex");
-% ylabel("Amplitude", FontSize=22, Interpreter="latex");
-% xlim([50000 50100]);
 
-% sig = sig(4:4:end); % clock, pps, no burst
+idxSurech = 1; % REMPLACER PAR L'INDICE MINIMISANT L'IES
 
-% sig = sig(6:20:end); % clock, pps, burst
+sig = sig(idxSurech:4:end); % sous-echantillonnage du signal recu a l'instant Ts
 
+%% SYNCHRO FREQUENTIELLE GROSSIERE
+% Gere par une PLL
+% cf. TS218, Cours 2 (https://rtajan.github.io/ts218/)
 
-sig = sig(1:4:end); % clock no pps no source no burst
-%% synchro frequentielle grossiere
-% Inutile, la source de 10 MHz externe nous garantit une constellation "propre"
-if exist("bup", "var")
-    sig = bup;
-end
-% freqSync = comm.CarrierSynchronizer("Modulation", "QPSK", "SamplesPerSymbol", 1);
-% 
-% sig_sync = freqSync(sig.');
-rn = sig.^M;                         % signal "rabattu"
+rn = sig.^M;                          % signal "rabattu"
 
 phases = zeros(length(rn), 1);        % phase de chaque symbole
 phases_exp = zeros(length(rn), 1);    % phase, comme exponentielle
 phases_exp_q = zeros(length(rn),1);   % quart de la phase
-corr   = zeros(length(rn), 1);        % signal corrigé (inutilisé)
 en     = zeros(length(rn), 1);        % valeurs de en
 vn     = zeros(length(rn), 1);        % valeurs de vn
 reg_loop=0;                           % registres
 reg_int=0;                            % registres
+
 % Boucle
 for i=1:length(rn)
 
@@ -128,43 +156,38 @@ for i=1:length(rn)
     phases_exp(i) = exp(1j * phase);
     phases_exp_q(i) = exp(-1j * phase/M);
 end
-% 
-bup = sig;
+
 sig = sig .* phases_exp_q.';
-% 
+
 scatterplot(sig);
-% comm.CoarseFrequencyCompensator
+
 %% SYNCHRO TEMPORELLE FINE
 
-M=4;
-phaseoffset = pi/4;
+phaseoffset = pi/4; % Decalage de phase pour la modulation QPSK
 
-% preamble = repmat([0; 1; 2; 3], 25, 1);
-preambleSymb = pskmod(bitSynchro, M, phaseoffset, InputType="bit");
+preambleSymb = pskmod(bitSynchro, M, phaseoffset, InputType="bit"); % Preambule module
 N = length(preambleSymb);
-p = intercorr(sig,preambleSymb);
-[mval,midx] = max(abs(p));
-% midx=50; % tmp
 
-% récupération des 65536 symboles
-pilote_rx = sig(midx:midx + N-1);
-sig_rx = sig(midx+N:end);
+p = intercorr(sig,preambleSymb); % Calcul d'intercorrelation simplifie entre le signal et le preambule genere
+[mval,midx] = max(abs(p));       % Recherche du maximum d'intercorrelation
+
+
+% récupération des 65536 symboles de l'image
+pilote_rx = sig(midx:midx + N-1); % Extraction du pilote
+sig_rx = sig(midx+N:end);         % Extraction de ce que l'on suppose etre l'image
+
+%% SYNCHRO FREQUENTIELLE FINE
+% Calcul du decalage de phase entre la sequence pilote extraite et generee
+% Moyennage de ce decalage pour en obtenir une valeur fiable
 err = 1/N * sum(pilote_rx .* conj(preambleSymb)./abs(preambleSymb).^2);
 phase_orig = angle(err);
 
+% Fenetrage sur notre image
 sig_rx = sig_rx(1:65536);
 
-Img = symbols2img(sig_rx, descrambler, phase_orig, params);
+% Conversion du signal extrait en image
+Img = symbols2img(sig_rx, descrambler, phase_orig, commParams);
 
-% padding = 16384 - length(test_d);
-% 
-% if padding > 0
-%     test_d = [test_d; zeros(padding, 1)];
-% else
-%     test_d = test_d(1:16384);
-% end
-
-% img_rx = reshape(test_d, 128, 128);
-
+% Affichage, et on est contents
 figure
 imshow(uint8(Img));
