@@ -15,12 +15,32 @@ params.ref.fech = 8e9;   % Frequence d'echantillonnage de reference (celle du co
 
 params.conversionFactor = params.fech/params.ref.fech; % Rapport des freq. d'echantillonnage
 
-params.targetDs = 2.5e6 * params.conversionFactor; % Debit symbole vise
 params.order = 6; % Ordre de la transformee de Walsh
 params.nCoeffs = 2^params.order; % Nombre de coefficients de la transformee de Walsh
 params.W = genWalsh(params.order); % Matrice de Walsh
-
 params.osr      = 1; % Facteur de surechantillonnage voulu pour le developpement en series de Walsh
+
+params.targetDs = 10e6 * params.conversionFactor; % Debit symbole vise
+params.targetTs = 1/params.targetDs;
+params.Te = 1/params.fech;
+params.fse = ceil(params.targetTs/params.Te);
+params.nRefreshPerOSDMSymb = params.fse/params.nCoeffs;
+
+if mod(params.nRefreshPerOSDMSymb, 2) == 1 % Compensation des cas impairs
+    params.nRefreshPerOSDMSymb = params.nRefreshPerOSDMSymb + 1;
+    params.fse               = params.fse+params.nCoeffs;
+end
+
+params.realTs           = params.fse*params.Te;
+params.realDs           = ceil(1/params.realTs);
+
+params.nSymbOSDMPerFrame = 1;           % symbols per frame
+
+params.totalDuration    = nextWalshLength(ceil((params.nSymbOSDMPerFrame/params.realDs)*params.fech), params.nCoeffs); % signal duration
+params.OSDMSymbolDuration = ceil(params.totalDuration/(params.nCoeffs*params.osr));
+
+
+
 
 params.fWalsh = params.fech/params.osr; % Frequence "d'echantillonnage" de Walsh
 params.fRefresh = params.fWalsh/(2^(params.order-1)); % Frequence de rafraichissement des echantillons de Walsh

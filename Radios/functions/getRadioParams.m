@@ -17,12 +17,18 @@ if strcmpi(radioType, 'tx')
     % Parametres specifiques a l'emetteur
     % params.enableBurstMode = true;
     % params.nFramesInBurstMode = 200;
-    params.Gain = 37;
+    params.Gain = 35;
     params.ChannelMapping = 1;
     params.InterpolationDecimationFactor = params.InterpolationFactor; % pour la retrocompatibilite du code
 elseif strcmpi(radioType, 'rx')
     % Parametres specifiques au recepteur
-    params.Gain = 27;
+    params.Gain = 37;
     params.ChannelMapping = 1;
     params.InterpolationDecimationFactor = params.DecimationFactor; % pour la retrocompatibilite du code
+elseif strcmpi(radioType, 'obs')
+    params.Gain = 35;
+    params.ChannelMapping = [1 2];
+    params.InterpolationDecimationFactor = params.InterpolationFactor;
+    params.PPSSource = 'external';    % Source de pulsations
+    params.ClockSource = 'external';  % Source d'horloge
 end
