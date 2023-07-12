@@ -25,4 +25,4 @@ fwrite(f, int8(0), "int8");
 fclose(f);
 
 mflag    = memmapfile(flag, "Format", "int8" , "Writable", true);
-imgRx(mflag);
+imgRxOSDM(mflag);
