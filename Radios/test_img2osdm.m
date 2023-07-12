@@ -4,7 +4,7 @@ setPath();
 
 %% Parameters
 
-commParams = getCommParams("tx");
+commParams = getCommParamsForWalsh("tx");
 radioParams = getRadioParams("tx");
 walshParams = getWalshParams();
 colors = plotColors();
@@ -15,4 +15,4 @@ scrambler = comm.Scrambler( ...
     "InitialConditions", commParams.scramblerInitState, ...
     "ResetInputPort", commParams.scramblerResetPort);
 
-c=img2osdm(commParams, radioParams, walshParams, scrambler);
+[sig]=img2osdm(commParams, radioParams, walshParams, scrambler);
