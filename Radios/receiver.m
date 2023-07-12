@@ -1,5 +1,7 @@
 clearvars -except rx; clc; close all; dbstop if error;
 
+setPath();
+
 %% RECEIVER
 
 rx = comm.SDRuReceiver('Platform','B210','SerialNum','32752A2');

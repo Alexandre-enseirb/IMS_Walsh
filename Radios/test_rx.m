@@ -1,5 +1,6 @@
 clear; clc; close all; dbstop if error;
 
+setPath();
 %pause(0.5);
 [Rx, Data, nOverrun] = recvData();
 

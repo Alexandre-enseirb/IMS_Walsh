@@ -1,5 +1,6 @@
 clear; clc; close all; dbstop if error;
 
+setPath();
 %% RADIOS
 
 % Rx = comm.SDRuReceiver("Platform", RxCfg.Platform, ...

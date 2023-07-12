@@ -1,5 +1,7 @@
 clear; clc; close all; dbstop if error;
 
+setPath();
+
 %% SETUP COMMUNICATION
 
 flag    = fullfile(tempdir, "radioRxflag");
@@ -38,7 +40,7 @@ bits = randi([0,1], commParams.symbolsPerFrame, commParams.M);
 
 % Modulation QPSK
 c = 1-2*bits;
-c = c(:,1) + 1j*c(:,2);
+c = sqrt(2)/2 * (c(:,1) + 1j*c(:,2));
 
 % Upsampling des symboles et convolution par le filtre de mise en forme
 symb = upsample(c, commParams.fse);
@@ -46,7 +48,7 @@ symb = repmat(symb, commParams.nFramesTx, 1);
 
 preamble = repmat([0 1;1 0], 5, 1);
 cPreamble = 1-2*preamble;
-cPreamble = cPreamble(:,1) + 1j * cPreamble(:,2);
+cPreamble = sqrt(2)/2 * (cPreamble(:,1) + 1j * cPreamble(:,2));
 preambleUpsampled = upsample(cPreamble, commParams.fse);
 
 

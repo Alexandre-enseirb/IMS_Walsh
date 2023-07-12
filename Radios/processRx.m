@@ -1,5 +1,7 @@
 clear; clc; close all; dbstop if error;
 
+setPath();
+
 %% PARAMS
 
 params = getCommParams('rx'); % Params used during communication

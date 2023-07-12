@@ -1,7 +1,7 @@
 close all
 clearvars -except tx
 reset_sdr = 1;
-
+setPath();
 %% Parameters of the USRP B210
 
 carriers = [600e6 1.5e9 2.45e9]; % Hz

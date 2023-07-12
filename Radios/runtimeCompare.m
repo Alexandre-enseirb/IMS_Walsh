@@ -3,6 +3,7 @@ clc;
 close all;
 dbstop if error;
 
+setPath();
 
 %%
 
