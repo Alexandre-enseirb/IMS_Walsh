@@ -16,6 +16,10 @@ function [mapping] = initMappingSemantic(vectors, combinations)
 %
 %   Multiple iterations of this file shall exist and this function's prototype may evolve to reflect those changes
 
+if size(vectors, 1) == 1
+    vectors = vectors.';
+end
+
 [nWords, ~] = size(vectors);
 mapping = dictionary();
 % randomise les cles pour eviter un "effet voisin" du a la generation des combinaisons
