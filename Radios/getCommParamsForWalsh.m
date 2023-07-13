@@ -53,7 +53,7 @@ params.nFramesTxQPSK = nFramesToSendQPSK*wParams.osr;
 
 nSamplesToSendOSDM = params.Img.dataToTransmitIntensity * params.nSamplesPerSymbOSDM * wParams.OSDMSymbolDuration;
 params.nRadioFramesTxOSDM = ceil(params.fse*nSamplesToSendOSDM/params.samplesPerFrame);
-
+params.nBERPoints = 3;
 
 params.samplingFreq = rParams.MasterClockRate/rParams.InterpolationDecimationFactor;
 params.sampleDuration = 1/params.samplingFreq;
