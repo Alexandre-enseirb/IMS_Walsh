@@ -38,6 +38,7 @@ load(file, "buffer1", "buffer2", "commParams");
 
 [sig, start, endf, flag] = detectSignalStartEnd(buffer1);
 if flag
+    disp("Looking at buffer 2");
     [sig, start, endf, flag] = detectSignalStartEnd(buffer2);
     if flag
         error("Please redo measures.");
@@ -109,6 +110,7 @@ carrier = carriers{1};
 sig = conv(sig, commParams.g);
 
 sigDown = sig(1:2:end);
+nQAMSymbPerOSDMSymb = 3; % Nombre de coefficients modules par symbole OSDM
 
 preambleSymb = pskmod(bitSynchro, commParams.ModOrderQPSK, commParams.PhaseOffsetQPSK, "gray", InputType="bit").';
 
@@ -126,64 +128,85 @@ phase_orig = angle(err);
 sigRetab = sigImg*exp(-1j*phase_orig);
 
 % Projection sur l'axe des reels pour recuperer le signal de Walsh original
-amplitudes = real(sigRetab);
-carrierRefs = real(carrier.walsh.Xw_b);
+amplitudes = real(sigRetab); % amplitudes recues
+carrierRefs = real(carrier.walsh.Xw_b); % valeurs de reference pour les coefficients non-modules
+
 % Transformee de Walsh
-dureePremierSymboleOSDM = 13*64; % echantillons
-rxCoeffs = zeros(64, 13, 64);
-targetCoeffs = [32 48 57];
 rxCoeffs = dwt(amplitudes, walshParams.W, walshParams.order, true);
+
 % Extraction des coefs d'interet
 interestingCoeffs = rxCoeffs(carrier.Clusters{2},:);
+
+% Padding si on n'atteint pas la longueur de l'image
 if mod(size(interestingCoeffs, 2), commParams.Img.dataToTransmitIntensity) ~= 0
     interestingCoeffs = [interestingCoeffs zeros(length(carrier.Clusters{2}), commParams.Img.dataToTransmitIntensity - mod(size(interestingCoeffs, 2), commParams.Img.dataToTransmitIntensity))];
 end
-interestingCoeffs3D = reshape(interestingCoeffs, cluster2Size, [], commParams.Img.dataToTransmitIntensity);
+
+% Pre-detection des coefficients modules
+% Separation des coefficients d'interet par pixel de l'image
+interestingCoeffs3D = reshape(interestingCoeffs, cluster2Size, [], ... 
+    commParams.Img.dataToTransmitIntensity);
+
+% Calcul du "bruit" par fenetre de rafraichissement en soustrayant la valeur de reference
 noise = interestingCoeffs3D - repmat(carrierRefs(carrier.Clusters{2}, :), 1, 1, size(interestingCoeffs3D, 3));  
 meanNoise = squeeze(mean(noise, 2));
+
+% Tri par bruit decroissant
+% Les coefficients modules etant "presque partout"™ differents de leur reference
+% Ils auront en moyenne un bruit residuel superieur
 [sorted, perm] = sort(abs(meanNoise), 1, 'descend');
 meanValues = mean(interestingCoeffs3D, 2);
-% Reperage par distance a la reference
 
+% Arrondi a l'impair le plus proche
+% Utile seulement si on utilise des amplitudes impaires
+% En l'occurence, seuls 1 et -1 sont utilises
 roundOdd = @(x) 2*floor(x/2) + 1; % source: https://fr.mathworks.com/matlabcentral/answers/45932-round-to-nearest-odd-integer
-nQAMSymbPerOSDMSymb = 3;
-idxPerWord = perm(1:3,:);
-meanValuePerWord = zeros(nQAMSymbPerOSDMSymb, commParams.Img.dataToTransmitIntensity);
+
+% Extraction des coefficients modules
+modulatedCoeffsIdx = perm(1:nQAMSymbPerOSDMSymb,:);
+meanValuePerModulatedCoeff = zeros(nQAMSymbPerOSDMSymb, commParams.Img.dataToTransmitIntensity);
+
+% Calcul de leur valeur moyenne, arrondie a l'impair le plus proche
 for i=1:commParams.Img.dataToTransmitIntensity
-    meanValuePerWord(:, i) = roundOdd(meanValues(idxPerWord(:, i), 1, i));
-end
-coefficientsPerWord = carrier.Clusters{2}(idxPerWord);
-[coefficientsPerWordSorted, perm] = sort(coefficientsPerWord, 1, "ascend");
-meanValuePerWordSorted = zeros(size(meanValuePerWord));
-for i=1:commParams.Img.dataToTransmitIntensity
-    meanValuePerWordSorted(:,i) = meanValuePerWord(perm(:,i), i);
+    meanValuePerModulatedCoeff(:, i) = roundOdd(meanValues(modulatedCoeffsIdx(:, i), 1, i));
 end
 
-finalCombinations = [coefficientsPerWordSorted.' meanValuePerWordSorted.'];
+% Recuperation de l'index des coefficients dans notre base de Walsh
+modulatedCoeffsWalshIdx = carrier.Clusters{2}(modulatedCoeffsIdx);
+% Tri par sequence croissante des coefficients et de leurs amplitudes
+[modulatedCoeffsWalshIdxSorted, perm] = sort(modulatedCoeffsWalshIdx, 1, "ascend");
+meanValuePerModulatedCoeffSorted = zeros(size(meanValuePerModulatedCoeff));
+for i=1:commParams.Img.dataToTransmitIntensity
+    meanValuePerModulatedCoeffSorted(:,i) = meanValuePerModulatedCoeff(perm(:,i), i);
+end
+
+% Mise en forme de la combinaison coeffs + amplitudes
+finalCombinations = [modulatedCoeffsWalshIdxSorted.' meanValuePerModulatedCoeffSorted.'];
 finalCombinations = reshape(finalCombinations.', nQAMSymbPerOSDMSymb,[]).';
 
-cmb = [32 48 57; -1 1 -1];
-extract = interestingCoeffs3D(:,:,1);
-
+% Reconstruction de l'image
 ImgRx = zeros(1, commParams.Img.dataToTransmitIntensity);
 for i=1:commParams.Img.dataToTransmitIntensity
     lineStart = (i-1)*2+1;
     lineEnd = i*2;
+    % Verification que la combinaison existe bel et bien
     [canInsert, finalKey] = isAKey(finalCombinations(lineStart:lineEnd, :), C2V.keys);
-    if ~canInsert
+    if ~canInsert % Si la combinaison n'existe pas, on la skip pour le moment
         fprintf("Skipping idx %d\n", i);
         ImgRxCell = {0};
-    else
+    else % Sinon, on ajoute son amplitude a notre image
         ImgRxCell = C2V({finalKey});
     end
     ImgRx(i) = ImgRxCell{1};
 end
 
+% Reshape et affichage
 ImgRx = reshape(ImgRx, 128, 128);
 
 figure
 imshow(uint8(ImgRx));
 
+% Comparaison avec l'image originale et calcul de l'erreur quadratique par pixel
 ogImg = imread("Data/walsh.png");
 ogImgGrayscale = squeeze(ogImg(:,:,1));
 
