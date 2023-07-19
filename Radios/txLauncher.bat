@@ -8,11 +8,11 @@ REM (ex : `parallel_transmitter`) SANS l'extension de fichier.
 REM Sinon, MATLAB va etre perdu et lancer une erreur.
 
 REM Ne pas mettre de guillemets autour du nom du fichier non plus
-set programName=img_transmitter
+set programName=OSDMTransmitter
 
 REM lance MATLAB sans affichages pour economiser des ressources et utiliser au
 REM mieux les radios
-start /B matlab -nodesktop -nosplash -batch "%programName%; exit;" > tx_logs.txt
+start /B matlab -nodesktop -nosplash -batch "%programName%; exit;"
 
 REM met l'invite de commande en pause tant qu'aucune action n'est realisee cote utilisateur
 REM pas forcement utile actuellement mais interessant si on veut ecrire dans l'invite de commande

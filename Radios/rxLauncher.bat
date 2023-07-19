@@ -11,7 +11,7 @@ set programName=parallel_receiver
 
 REM lance MATLAB sans affichages pour economiser des ressources et utiliser au
 REM mieux les radios
-start /B matlab -nodesktop -nosplash -batch "%programName%; exit;" > rx_logs.txt
+start /B matlab -nodesktop -nosplash -batch "%programName%; exit;"
 
 REM met l'invite de commande en pause tant qu'aucune action n'est realisee cote utilisateur
 REM pas forcement utile actuellement mais interessant si on veut ecrire dans l'invite de commande
