@@ -84,7 +84,7 @@ while true
 
     % Debut d'envoi ?
     if mflag.Data(1) == uint8(1)
-        disp("Data detected.");
+        % disp("Data detected.");
         timeout = nBufferWindows;
         mflag.Data(1) = uint8(0);
     end
