@@ -53,9 +53,9 @@ disp("Generation signal");
 [sig]=img2osdm(commParams, radioParams, walshParams, scrambler);
 % sig = upsample(sig, commParams.fse);
 % sig = conv(sig, commParams.g);
-disp("Generation signal complexe");
-sigC = sig + 1j * sig;
-%sigC = sig;
+% disp("Generation signal complexe");
+% sigC = sig + 1j * sig;
+sigC = sig;
 % Traitement du signal avant l'envoi
 tx_signal_norm = sigC./max(max(real(sigC)), max(imag(sigC)));
 
