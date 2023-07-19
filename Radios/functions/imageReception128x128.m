@@ -1,8 +1,6 @@
-function [Img] = imageReception128x128(filename)
+function [Img, sig] = imageReception128x128(buffer1, buffer2, commParams, radioParams)
 
-commParams = getCommParams('tx');
-commParams.fse = 4; % temp
-radioParams = getRadioParams('tx');
+
 
 descrambler = comm.Descrambler( ...
     "CalculationBase", commParams.scramblerBase, ...
@@ -10,7 +8,7 @@ descrambler = comm.Descrambler( ...
     "InitialConditions", commParams.scramblerInitState, ...
     "ResetInputPort", commParams.scramblerResetPort);
 imgSize = 65536;
-load(filename, "buffer1", "buffer2");
+
 
 [sig, phaseOffsetOrigin] = synchronize(buffer1, buffer2, commParams, radioParams);
 
