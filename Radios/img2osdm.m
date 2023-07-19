@@ -98,6 +98,7 @@ function [sig] = img2osdm(commParams, radioParams, walshParams, scrambler, mappi
             attenuationFactor, ...
             stopAtMax, ...
             walshParams);
+        save("WalshRadioCombinations.mat", "modulatedCoeffsWalsh");
     else
         load("WalshRadioCombinations.mat", "modulatedCoeffsWalsh");
     end
