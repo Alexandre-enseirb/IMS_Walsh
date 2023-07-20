@@ -26,9 +26,9 @@ offset = 800; % securite
 startIdxBuffer1 = max(1, startIdxBuffer1-offset);
 startIdxBuffer2 = max(1, startIdxBuffer2-offset);
 
-if ~flag1
+if flag1
     signal = buffer1(startIdxBuffer1:end);
-elseif ~flag2
+elseif flag2
     signal = buffer2(startIdxBuffer2:end);
 else
     error("No good buffer");
@@ -39,7 +39,8 @@ end
 symbolTime = findBestSubSample(signal, commParams.fse, 100, commParams.ModOrderQPSK, 6000);
 
 %% Bloc synchronisation frequentielle grossiere (PLL)
-synchronizedSignal = coarseFreqSync(signal, symbolTime, commParams.fse);
+% synchronizedSignal = coarseFreqSync(signal, symbolTime, commParams.fse);
+synchronizedSignal = signal(symbolTime:commParams.fse:end);
 
 %% Bloc synchronisation temporelle fine
 [sig, preambleRx, preambleTx] = fineTimeSynchronization(synchronizedSignal, commParams.ModOrderQPSK, commParams.PhaseOffsetQPSK);
