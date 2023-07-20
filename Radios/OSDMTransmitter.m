@@ -82,8 +82,7 @@ disp("Envoi");
 mflag.Data(1) = uint8(1);
 symbIdx = 1;
 for i=1:commParams.nRadioFramesTxOSDM
-% i=1;
-% while true
+
     startIdx = (i-1) * commParams.samplesPerFrame + 1;
     endIdx = i * commParams.samplesPerFrame;
     
@@ -94,9 +93,6 @@ for i=1:commParams.nRadioFramesTxOSDM
         % nUnderrun = nUnderrun + 1;
     end
 
-%    if i==commParams.nFramesTx+1
-%        i = 1;
-%    end
     
 end
 

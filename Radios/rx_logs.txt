@@ -1,19 +1,11 @@
-
-                            < M A T L A B (R) >
-                  Copyright 1984-2023 The MathWorks, Inc.
-             R2023a Update 1 (9.14.0.2239454) 64-bit (glnxa64)
-                               March 30, 2023
-
-Warning: X does not support locale en_US.UTF-8
- 
-To get started, type doc.
-For product information, visit www.mathworks.com.
- 
+Setting up.
 [RX] Starting reception...
-linux; GNU C++ version 10.3.0; Boost_107800; UHD_4.2.0.0-vendor
+Setup done.
+Win32; Microsoft Visual C++ version 14.2; Boost_107800; UHD_4.2.0.0-vendor
 
 ---------- see libuhd version information above this line ----------
-[INFO] [UHD] linux; GNU C++ version 10.3.0; Boost_107800; UHD_4.2.0.0-vendor
-     0
-
-[RX] Job done
+locked on ref
+Start listening.
+Data detected.
+Saving... Please do not turn off the script.
+Saving done. Exiting.

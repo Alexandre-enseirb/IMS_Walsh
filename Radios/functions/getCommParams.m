@@ -44,7 +44,7 @@ else
     params.samplesPerFrame = 4000;
 end
 
-params.fse = 2*wParams.osr;
+params.fse = 10*wParams.osr;
 params.symbolsPerFrame = floor(params.samplesPerFrame/params.fse);
 requiredSymbolsTx = ceil(totalDataToTransmit/params.symbolsPerFrame);
 params.nFramesTx = requiredSymbolsTx*wParams.osr;

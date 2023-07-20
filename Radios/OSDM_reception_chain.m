@@ -1,3 +1,4 @@
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Ce script realise la synchronisation manuelle d'un signal recu module en QPSK.
 %
@@ -109,7 +110,7 @@ carrier = carriers{1};
 
 sig = conv(sig, commParams.g);
 
-sigDown = sig(1:2:end);
+sigDown = sig(2:2:end);
 nQAMSymbPerOSDMSymb = 3; % Nombre de coefficients modules par symbole OSDM
 
 preambleSymb = pskmod(bitSynchro, commParams.ModOrderQPSK, commParams.PhaseOffsetQPSK, "gray", InputType="bit").';
