@@ -1,9 +1,9 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Permet la transmission de l'OSDM en emettant
-% une image 128x128 grayscale de J. Walsh
+% Permet la visualisation de l'OSDM en emettant
+% en boucle les memes donnees
 %
-% Pour observer les donnees sur une plus longue periode,
-% voir OSDMVisualizer.m
+% Pour transmettre une seule fois les donnees,
+% voir OSDMTransmitter.m
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 clear; clc; close all; dbstop if error;
@@ -89,8 +89,9 @@ end
 disp("Envoi");
 mflag.Data(1) = uint8(1);
 symbIdx = 1;
-for i=1:commParams.nRadioFramesTxOSDM
 
+i=1;
+while true
     startIdx = (i-1) * commParams.samplesPerFrame + 1;
     endIdx = i * commParams.samplesPerFrame;
     
@@ -98,9 +99,12 @@ for i=1:commParams.nRadioFramesTxOSDM
     
     if underrun
         disp(symbIdx);
-       
+        % nUnderrun = nUnderrun + 1;
     end
 
+    if i==commParams.nFramesTx+1
+        i = 1;
+    end
+    
 end
 
-mflag.Data(1) = uint8(0);
