@@ -124,7 +124,7 @@ while true
 
     % Sauvegarde une fois le timeout fini
     if timeout == 0
-        [img, sigExtracted]  = imageReception128x128(buffer1, buffer2, commParams, radioParams)
+        [img, sigExtracted]  = imageReception128x128(buffer1, buffer2, commParams, radioParams);
     end
 
 end

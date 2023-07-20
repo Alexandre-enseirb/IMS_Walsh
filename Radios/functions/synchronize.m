@@ -19,8 +19,8 @@ function [sig, phaseOffsetOrigin] = synchronize(buffer1, buffer2, commParams, ra
 
 %% Bloc detection du debut du signal
 offset = 800; % securite
-[~, startIdxBuffer1, ~, flag1] = detectSignalStartEnd(buffer1(:));
-[~, startIdxBuffer2, ~, flag2] = detectSignalStartEnd(buffer2(:));
+[~, startIdxBuffer1, ~, flag1] = detectSignalStartEndV2(buffer1(:));
+[~, startIdxBuffer2, ~, flag2] = detectSignalStartEndV2(buffer2(:));
 
 % Ajout de l'offset et comparaison a 0
 startIdxBuffer1 = max(1, startIdxBuffer1-offset);
