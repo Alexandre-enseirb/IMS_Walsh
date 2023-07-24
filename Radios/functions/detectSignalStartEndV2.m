@@ -1,11 +1,11 @@
 function [sig, startIdx, endIdx, flag] = detectSignalStartEndV2(buffer)
 %DETECTSIGNALSTARTEND detecte le debut et la fin du signal dans un buffer de radio
 % Cette fonction se sert d'un enregistrement du bruit de la radio pour determiner
-% la variance du bruit. On se fixe un seuil a 20x l'ecart-type du bruit et on
+% la variance du bruit. On se fixe un seuil a 5x l'ecart-type du bruit et on
 % detecte le debut et la fin du signal.
 %
 % Par mesure de securite, si un candidat (i.e. un echantillon d'amplitude superieur
-% au seuil) est detecte parmi les 200 premiers echantillons du signal, le buffer
+% au seuil) est detecte parmi les 1000 premiers echantillons du signal, le buffer
 % est considere comme "invalide" (le signal est en deux parties et se "replie" sur 
 % debut du buffer)
 %
