@@ -22,7 +22,7 @@ if strcmpi(radioType, 'tx')
     params.InterpolationDecimationFactor = params.InterpolationFactor; % pour la retrocompatibilite du code
 elseif strcmpi(radioType, 'rx')
     % Parametres specifiques au recepteur
-    params.Gain = 37;
+    params.Gain = 30;
     params.ChannelMapping = 1;
     params.InterpolationDecimationFactor = params.DecimationFactor; % pour la retrocompatibilite du code
 elseif strcmpi(radioType, 'obs')

@@ -99,6 +99,10 @@ for i=1:commParams.nRadioFramesTxOSDM
     if underrun
         disp(symbIdx);
     end
+<<<<<<< HEAD
+=======
+
+>>>>>>> 02328263f27bf2a8ec1cce263dbdb63401a255d5
 end
 
 mflag.Data(1) = uint8(0);

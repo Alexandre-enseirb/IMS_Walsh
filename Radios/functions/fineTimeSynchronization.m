@@ -11,5 +11,5 @@ p = intercorr(signal, preambleSymb); % Calcul d'intercorrelation simplifie entre
 [~,midx] = max(abs(p));              % Recherche du maximum d'intercorrelation
 
 % recuperation des 65536 symboles
-piloteRx = sig(midx:midx + N-1); % Extraction du pilote
-sigRx = sig(midx+N:signal);         % Extraction de ce que l'on suppose etre l'image
+piloteRx = signal(midx:midx + N-1); % Extraction du pilote
+sigRx = signal(midx+N:signal);         % Extraction de ce que l'on suppose etre l'image
