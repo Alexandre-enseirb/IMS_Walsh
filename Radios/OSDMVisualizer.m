@@ -30,7 +30,7 @@ flag    = fullfile(tempdir, "radioRxflag");
 mflag    = memmapfile(flag, "Format", "int8" , "Writable", true);
 disp("Generation des parametres")
 commParams = getCommParamsForWalsh("tx");
-radioParams = getRadioParams("tx");
+radioParams = getRadioParams("obs");
 walshParams = getWalshParams();
 colors = plotColors();
 disp("Instantiation radio")
