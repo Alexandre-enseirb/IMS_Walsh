@@ -26,4 +26,5 @@ Radios/test_log.txt
 Radios/tx_logs.txt
 unlinker.sh
 Radios/killMatlab.sh
-
+**/tx_logs.txt
+**/rx_logs.txt
