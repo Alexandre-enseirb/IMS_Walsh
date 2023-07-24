@@ -21,13 +21,13 @@ buffer = buffer(:);
 
 % Estiation de la variance du bruit et mise en place du seuil
 [~, noiseVariance] = profileNoiseRadio();
-threshold = 20*sqrt(noiseVariance);
+threshold = 5*sqrt(noiseVariance);
 
 % Detection du debut du signal
 startIdx = find(real(buffer) > threshold, 1);
 
 % Detecte un repliement du signal sur le debut du buffer
-if startIdx < 200
+if startIdx < 1000
     sig = [];
     startIdx = -1;
     flag = false;
