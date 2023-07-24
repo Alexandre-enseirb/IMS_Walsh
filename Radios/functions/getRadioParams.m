@@ -26,9 +26,9 @@ elseif strcmpi(radioType, 'rx')
     params.ChannelMapping = 1;
     params.InterpolationDecimationFactor = params.DecimationFactor; % pour la retrocompatibilite du code
 elseif strcmpi(radioType, 'obs')
-    params.Gain = 35;
-    params.ChannelMapping = [1 2];
+    params.Gain = 60;
+    params.ChannelMapping = 1;
     params.InterpolationDecimationFactor = params.InterpolationFactor;
-    params.PPSSource = 'external';    % Source de pulsations
-    params.ClockSource = 'external';  % Source d'horloge
+    params.PPSSource = 'internal';    % Source de pulsations
+    params.ClockSource = 'internal';  % Source d'horloge
 end

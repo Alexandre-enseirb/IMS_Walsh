@@ -32,15 +32,15 @@ setPath();
 %% CHOIX DU DEBUT DU SIGNAL
 
 load bitSynchro.mat
-file = "OSDM_img_rx_clock_pps_rrc_Complex_preamble_QPSK.mat";
+file = "Attempt_no_os_OSDM.mat";
 
 load(file, "buffer1", "buffer2", "commParams");
 
-[sig, start, endf, flag] = detectSignalStartEnd(buffer1);
-if flag
+[sig, start, endf, flag] = detectSignalStartEndV2(buffer1);
+if ~flag
     disp("Looking at buffer 2");
-    [sig, start, endf, flag] = detectSignalStartEnd(buffer2);
-    if flag
+    [sig, start, endf, flag] = detectSignalStartEndV2(buffer2);
+    if ~flag
         error("Please redo measures.");
     else
         noise = [buffer2(1:start) buffer2(endf:end)];
@@ -48,9 +48,23 @@ if flag
 else
     noise = [buffer1(1:start) buffer1(endf:end)];
 end
-
+walshParams = getWalshParams();
 Pbruit = var(noise);
 Psig = 1/length(sig)*sum(abs(sig).^2);
+
+sigFFT = fftshift(fft(sig, walshParams.Nfft));
+sigPow = abs(sigFFT).^2;
+sigdBW = 10*log10(abs(sigFFT).^2);
+sigdBm = sigdBW + 30;
+sigdB = 10*log10(sigPow/max(sigPow));
+
+realFreqIdxStart = find(walshParams.freqAxis > 0, 1);
+bwIdxStart = find(walshParams.freqAxis>walshParams.BW.usedInterval(1), 1);
+bwIdxEnd = find(walshParams.freqAxis>walshParams.BW.usedInterval(2), 1);
+inBandPowerdBm = sigdBm(bwIdxStart:bwIdxEnd);
+oobPowerdBm = [sigdBm(realFreqIdxStart:bwIdxStart); sigdBm(bwIdxEnd:end)];
+inBandAxis = walshParams.freqAxis(bwIdxStart:bwIdxEnd);
+oobAxis = [walshParams.freqAxis(realFreqIdxStart:bwIdxStart) walshParams.freqAxis(bwIdxEnd:end)];
 
 SNRLin = Psig/Pbruit;
 SNRdB = 10*log10(SNRLin);
@@ -90,7 +104,7 @@ if ~exist("commParams", "var")
     commParams = getCommParams('rx'); % Parametres de la communication
 end
 
-walshParams = getWalshParams();
+
 
 load("WalshRadioCombinations.mat");
 
@@ -107,20 +121,30 @@ cluster3Size = 64-cluster2Size-cluster1Size;
             [cluster1Size cluster2Size cluster3Size]);
 carrier = carriers{1};
 
-sig = conv(sig, commParams.g);
+preambleExtracted = sig(1:1e6);
+preambleFiltered = conv(preambleExtracted, commParams.g);
 
-sigDown = sig(1:2:end);
+% sig = conv(sig, commParams.g);
+% 
+% sigDown = sig(1:2:end);
+% sigDown = sig;
 nQAMSymbPerOSDMSymb = 3; % Nombre de coefficients modules par symbole OSDM
 
 preambleSymb = pskmod(bitSynchro, commParams.ModOrderQPSK, commParams.PhaseOffsetQPSK, "gray", InputType="bit").';
 
-p = intercorr(sigDown(1:1e6), preambleSymb);
+delay = 10;
+
+symbolTime = findBestSubSample( preambleFiltered, commParams.fse, length(preambleSymb), commParams.ModOrderQPSK, commParams.PhaseOffsetQPSK);
+preambleDownsampled = preambleFiltered(symbolTime+delay:commParams.fse:end-delay);
+
+p = intercorr(preambleDownsampled, preambleSymb);
 [mval, midx] = max(abs(p));
 N = length(preambleSymb);
+midx = midx + 1;
 
 clear buffer1 buffer2
-preambleRx = sigDown(midx:midx+N-1);
-sigImg = sigDown(midx+N:end);
+preambleRx = sig(2*midx:2:2*midx+2*N-1);
+sigImg = sig(2*midx+2*N+delay/2:end);
 
 err = 1/N * sum(preambleRx .* conj(preambleSymb)./abs(preambleSymb).^2);
 phase_orig = angle(err);
@@ -129,10 +153,13 @@ sigRetab = sigImg*exp(-1j*phase_orig);
 
 % Projection sur l'axe des reels pour recuperer le signal de Walsh original
 amplitudes = real(sigRetab); % amplitudes recues
+tmpMaximalDurationAllowed = 64*13*16384;
+amplitudes = amplitudes(1:tmpMaximalDurationAllowed);
 carrierRefs = real(carrier.walsh.Xw_b); % valeurs de reference pour les coefficients non-modules
 
 % Transformee de Walsh
 rxCoeffs = dwt(amplitudes, walshParams.W, walshParams.order, true);
+
 
 % Extraction des coefs d'interet
 interestingCoeffs = rxCoeffs(carrier.Clusters{2},:);

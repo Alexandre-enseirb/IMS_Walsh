@@ -31,7 +31,7 @@ params.ModOrderQPSK = 4;   % QPSK
 params.ModOrder64QAM = 64; % 64-QAM
 params.PhaseOffsetQPSK = pi/4;
 params.leftMSB = true;
-
+params.nBERPoints = 3;
 
 params.M = 2; % Bits per symbols
 params.nFrames = 1000; 
