@@ -1,4 +1,4 @@
-function [combinations] = improvedCoefficientsSelectionv2(nCoefficientsToSelect, ...
+function [combinations, allUniqueCoeffs] = improvedCoefficientsSelectionv2(nCoefficientsToSelect, ...
     cluster, ...
     carrier, ...
     nSymbolsCombinationsPerCoefficientsCombinations, ...
@@ -37,6 +37,7 @@ end
 coefficients = findBestFits(cluster, fftWalsh, nBestFitsPerDepth, depth, params);
 iCoefficients = 1;
 validCombinations = 0;
+allUniqueCoeffs = [];
 
 % Generation of valid combinations
 while validCombinations < nCombinationsToGenerate || ~stopAtMax
@@ -50,6 +51,7 @@ while validCombinations < nCombinationsToGenerate || ~stopAtMax
             [coeffsSorted, idxPerm] = sort(coefficients(iCoefficients, :), "ascend");
             realVals = realVals(idxPerm);
             savedData = [coeffsSorted; realVals.'];
+            allUniqueCoeffs = unique([allUniqueCoeffs coeffsSorted]);
             key = keyHash(savedData);
             % Evite les doublons
             if combinations.numEntries == 0 || ~combinations.isKey(key)
@@ -67,6 +69,8 @@ while validCombinations < nCombinationsToGenerate || ~stopAtMax
     end
     fprintf("[%d]: %d/%d done\n",iCoefficients, validCombinations, nCombinationsToGenerate);
 end
+
+sort(allUniqueCoeffs, "ascend");
 end
 
 function toto = tata(tutu)
