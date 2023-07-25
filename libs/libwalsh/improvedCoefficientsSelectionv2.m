@@ -1,4 +1,4 @@
-function [combinations] = improvedCoefficientsSelectionv2(nCoefficientsToSelect, ...
+function [combinations, allUniqueCoeffs] = improvedCoefficientsSelectionv2(nCoefficientsToSelect, ...
     cluster, ...
     carrier, ...
     nSymbolsCombinationsPerCoefficientsCombinations, ...
@@ -21,7 +21,7 @@ combinations = dictionary();
 cluster = fliplr(cluster);
 
 depth = nCoefficientsToSelect;
-nBestFitsPerDepth = 6;
+nBestFitsPerDepth = 4;
 
 % fft of every cluster 2 function
 fftWalsh = zeros(length(cluster), params.Nfft);
@@ -37,7 +37,7 @@ end
 coefficients = findBestFits(cluster, fftWalsh, nBestFitsPerDepth, depth, params);
 iCoefficients = 1;
 validCombinations = 0;
-allAttempts = 0;
+allUniqueCoeffs = [];
 
 % Generation of valid combinations
 while validCombinations < nCombinationsToGenerate || ~stopAtMax
@@ -45,13 +45,13 @@ while validCombinations < nCombinationsToGenerate || ~stopAtMax
     for iReload=1:nSymbolsCombinationsPerCoefficientsCombinations
         % Since we have no clue for now about which coefficients are best, we randomize it
         [~, sigdB, ~, realVals] = createRealSignal(nModSymbPerOSDMSymb, nSymbOSDMTx, 0, carrier, symbOSDMDuration, coefficients(iCoefficients, :), coeffCarrier, attenuationFactor, params);
-        allAttempts = allAttempts + 1;
         % If the generated signal has a conform spectrum
         if isConform(sigdB(params.nullFrequencyIdx:params.maxConformFrequency), params.BW_visible(params.nullFrequencyIdx:params.maxConformFrequency).')
             % Save it to the dictionary.
             [coeffsSorted, idxPerm] = sort(coefficients(iCoefficients, :), "ascend");
             realVals = realVals(idxPerm);
             savedData = [coeffsSorted; realVals.'];
+            allUniqueCoeffs = unique([allUniqueCoeffs coeffsSorted]);
             key = keyHash(savedData);
             % Evite les doublons
             if combinations.numEntries == 0 || ~combinations.isKey(key)
@@ -67,8 +67,10 @@ while validCombinations < nCombinationsToGenerate || ~stopAtMax
         validCombinations = nCombinationsToGenerate + 1; % exit the while in a clean way
         stopAtMax = true; % ensures we leave even if we wanted combinations for every coefficient families
     end
-    fprintf("[%3d]: %4d/%4d found (%8d combinations tested.)\n",iCoefficients, validCombinations, nCombinationsToGenerate, allAttempts);
+    fprintf("[%d]: %d/%d done\n",iCoefficients, validCombinations, nCombinationsToGenerate);
 end
+
+sort(allUniqueCoeffs, "ascend");
 end
 
 function toto = tata(tutu)
