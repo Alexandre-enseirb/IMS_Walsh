@@ -25,7 +25,7 @@
 % Enfin, l'image est restauree via une conversion des bits estimes en nouveaux pixels.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [BER, flag, errorsCount, bitsCount] = OSDMComputeBERFromMmap(buffer1, buffer2, commParams, mmap)
+function [BER, flag, errorsCount, bitsCount, invalidCoeffs] = OSDMComputeBERFromMmap(buffer1, buffer2, commParams, mmap)
 
 %% CHOIX DU DEBUT DU SIGNAL
 
@@ -105,6 +105,13 @@ N = length(preambleSymb);
 preambleExtracted = sig(idxDebutPreamble:idxDebutPreamble + commParams.fse * N);
 symbolTime = findBestSubSample(preambleExtracted, commParams.fse, N, commParams.ModOrderQPSK);
 
+if mod(idxDebutPreamble, 2) == 0
+    symbolTime = symbolTime + 1;
+    if symbolTime == commParams.fse + 1
+        symbolTime = 1;
+    end
+end
+
 % Sous-echantillonnage du signal au temps symbole
 sigDown = sig(symbolTime:commParams.fse:end);
 
@@ -123,6 +130,22 @@ phase_orig = angle(err);
 
 % Rotation du signal vers l'axe des reels
 sigRetab = sigImg*exp(-1j*phase_orig);
+
+% On extrait exactement le nombre d'echantillons que l'on souhaite (sinon, erreurs a la transformee de Walsh)
+expectedSignalLength = walshParams.nCoeffs * walshParams.OSDMSymbolDuration * commParams.Img.dataToTransmitIntensity;
+
+% Si on a plus d'echantillons que prevu
+if length(sigRetab) > expectedSignalLength
+    % On rogne la fin du signal (on part du principe que le debut est correctement trouve)
+    sigRetab = sigRetab(1:expectedSignalLength);
+else
+    % Sinon, on pad de zeros
+    % Il doit y avoir une methode plus efficace, mais pour l'instant
+    % on va se contenter de celle-ci
+    tmp = zeros(1, expectedSignalLength);
+    tmp(1:length(sigRetab)) = sigRetab;
+    sigRetab = tmp;
+end
 
 % Projection sur l'axe des reels pour recuperer le signal de Walsh original
 amplitudes = real(sigRetab);
@@ -202,14 +225,18 @@ bpi = 8; % Bits par integer (uint8 = 8 bits/int)
 leftMSB = true; % Bit de poids fort a gauche
 
 % Conversion de l'image en binaire
-ImgRxBinary = int2bit(ImgRx(:), bpi, leftMSB);
+ImgRxBinary = int2bit(ImgRx(validIdx).', bpi, leftMSB);
 
 % Lecture de l'image initiale
 imgInit = mmap.Data;
-imgInitVector = imgInit(:);
+imgInitVector = imgInit(validIdx);
 
 imgInitBinary = int2bit(imgInitVector, bpi, leftMSB);
     
-errorsCount = sum(abs(ImgRxBinary(validIdx)-double(imgInitBinary(validIdx))), "all");
+errorsCount = sum(abs(ImgRxBinary-double(imgInitBinary)), "all");
 bitsCount = sum(validIdx) * bpi;
+if sum(validIdx) > 100
+    disp("foo");
+end
+invalidCoeffs = commParams.Img.dataToTransmitIntensity - sum(validIdx);
 BER = errorsCount/(sum(validIdx)*bpi) * 100;

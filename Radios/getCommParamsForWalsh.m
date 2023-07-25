@@ -34,7 +34,8 @@ params.Img.dataToTransmitQPSK = 128*128*4 + 100; % Taille image binarisee + prea
 params.nSamplesPerSymbOSDM = wParams.nCoeffs; % Nombre d'echantillons par symbole OSDM
 params.PhaseOffsetQPSK = pi/4;
 params.leftMSB = true;
-
+params.nErrorsMinimum = 100;
+params.nBitsMinimum = 1e6;
 
 params.M = 2; % Bits per symbols
 params.nFrames = 1000; 

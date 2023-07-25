@@ -29,6 +29,10 @@ f = fopen(sendFlagFile, "w+");
 fwrite(f, int8(0), "int8");
 fclose(f);
 
+f = fopen(mmap, "w+");
+fwrite(f, uint8(zeros(1, 16384)), "uint8");
+fclose(f);
+
 mflag    = memmapfile(flag, "Format", "int8" , "Writable", true);
 sendFlag = memmapfile(sendFlagFile, "Format", "int8", "Writable", true);
 mmap = memmapfile(mmap, "Format", "uint8", "Writable", true);

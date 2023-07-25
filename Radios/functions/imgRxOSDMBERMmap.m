@@ -56,8 +56,12 @@ currentBER = 1;
 
 sendFlag.Data(1) = TX_MSG_SEND;
 halfBufferWindows = nBufferWindows/2;
+errorsCount = 0;
+bitsCount = 0;
+invalids = 0;
 disp("Start listening.");
-while currentBER <= commParams.nBERPoints
+
+while errorsCount < commParams.nErrorsMinimum && bitsCount < commParams.nBitsMinimum
 
     [buffer1(:, i), ~, overrun] = radio();
     % buffer((i-1)*datalength+1 : i*datalength) = radio();
@@ -87,20 +91,22 @@ while currentBER <= commParams.nBERPoints
     % Sauvegarde une fois le timeout fini
     if timeout == 0
         fprintf("Studying %d\n", 35-currentBER+1);
-        [BER(currentBER), errFlag, err_cnt, bit_cnt] = OSDMComputeBERFromMmap(buffer1, buffer2, commParams, mmap);
-        if ~errFlag
-            sendFlag.Data(1) = TX_MSG_NOSIG;
-        else
-            sendFlag.Data(1) = TX_MSG_SEND;
+        [BER(currentBER), errFlag, err_cnt, bit_cnt, invalidCoeffs] = OSDMComputeBERFromMmap(buffer1, buffer2, commParams, mmap);
+        if errFlag
             
+            errorsCount = errorsCount + err_cnt;
+            bitsCount = bitsCount + bit_cnt;
+            invalids = invalids + invalidCoeffs;
             fprintf("Got BER: %d\n", BER(currentBER));
-            save(sprintf("BER_measure_for_%d\n", currentBER), "buffer1", "buffer2", "BER");
+            
             currentBER = currentBER+1; 
             % radio.Gain = radio.Gain + 1;
         end
+        sendFlag.Data(1) = TX_MSG_SEND;
     end
 end
-
-save("BER_analysis_TEST.mat", "BER", "err_cnt", "bit_cnt");
+txParams = getRadioParams('tx');
+save(sprintf("BER_analysis_Tx_%d_Rx_%d.mat", txParams.Gain, radioParams.Gain), ...
+    "BER", "errorsCount", "bitsCount");
 end
 
