@@ -9,7 +9,7 @@ end
 
 params = struct();
 
-params.fech = 2.5e6;     % Frequence d'echantillonnage de la radio
+params.fech = 8e9;     % Frequence d'echantillonnage de la radio
 params.ref.fech = 8e9;   % Frequence d'echantillonnage de reference (celle du convertisseur)
 
 
@@ -79,6 +79,14 @@ if generousMode
     warning("backtrace", "on");
 end
 
+%% Ancien masque
+% Note : Je laisse cette partie du code pour afficher l'ancien masque.
+% Ce masque est encore utilise par la majorite des scripts, notamment la variable BW_visible
+% Cependant, ce n'est pas celui que l'on est senses respecter, puisqu'il est defini pour les appareils mobiles
+% et non pour les stations de base.
+% Le masque defini par la suite (excepte la version "generousMode", qui est laissee pour des raisons de compatibilite mais inutilisee)
+% est issu du tableau 6.5.3.3.3.21-1, page 544 de la documentation de l'ETSI pour les equipements utilisateurs en 5G (2021-02)
+% https://www.etsi.org/deliver/etsi_ts/138500_138599/13852101/16.06.00_60/ts_13852101v160600p.pdf
 
 generousModePenalty = 6;
 firstOobMaxAmp = -13 + generousMode * generousModePenalty;  % Amplitude a ne pas depasser dans la bande adjacente associee
@@ -101,6 +109,32 @@ params.BW_visible( (params.freqAxis > params.BW.second_oob(1) & params.freqAxis 
  (params.freqAxis > params.BW.first_oob(2) & params.freqAxis < params.BW.second_oob(2))) = secondOobMaxAmp;
 params.BW_visible( (params.freqAxis > params.BW.third_oob(1) & params.freqAxis < params.BW.second_oob(1)) | ...
  (params.freqAxis > params.BW.second_oob(2) & params.freqAxis < params.BW.third_oob(2)))  = lastOobMaxAmp;
+
+%% Nouveau masque
+% Le nouveau masque est associe aux stations de base.
+% Il s'agit du masque associe aux stations de base de categorie A (a puissance limitee), pour des communications
+% a bande superieure a 1 GHz.
+% Il est defini dans le tableau 6.6.4.2.1-1 de la documentation de l'ETSI relative aux stations de base en 5G (2019-05)
+% https://www.etsi.org/deliver/etsi_ts/138100_138199/138104/15.05.00_60/ts_138104v150500p.pdf (page 56)
+
+params.Mask.MeasurementBandwidth=100e3; % 100 kHz
+params.Mask.BandsWidth = 5e6; % 5 MHz de bande pour les "oob"
+
+distanceToLeftEdge = params.BW.start - params.freqAxis;
+distanceToRightEdge = params.freqAxis - params.BW.end;
+
+pointsInFirstOobLeft = find(distanceToLeftEdge < params.Mask.BandsWidth & distanceToLeftEdge > 0); % premiere bande a gauche de la bande passante 
+pointsInFirstOobRight = find(distanceToRightEdge < params.Mask.BandsWidth & distanceToRightEdge > 0); % premiere bande a droite de la bande passante
+slopeLeft = -7 - 7/5 * ( (distanceToLeftEdge(pointsInFirstOobLeft)) / 1e6 - 0.05 );
+slopeRight = -7 - 7/5 * ( (distanceToRightEdge(pointsInFirstOobRight)) / 1e6 - 0.05 );
+
+params.Mask.visible = -13 * ones(size(params.freqAxis));
+
+params.Mask.visible(distanceToLeftEdge < 0 & distanceToRightEdge < 0) = Inf;
+params.Mask.visible(pointsInFirstOobLeft) = slopeLeft;
+params.Mask.visible(pointsInFirstOobRight) = slopeRight;
+params.Mask.visible(distanceToLeftEdge < 2* params.Mask.BandsWidth & distanceToLeftEdge >= params.Mask.BandsWidth) = -14;
+params.Mask.visible(distanceToRightEdge < 2* params.Mask.BandsWidth & distanceToRightEdge >= params.Mask.BandsWidth) = -14;
 
 params.Tech_s     = 1/params.fech;     % duree d'un echantillon, s
 params.TWalsh_s   = 1/params.fWalsh;   % duree d'un "echantillon de Walsh", s
@@ -136,5 +170,9 @@ params.fs2    = find(params.freqAxis > params.fWalsh/2, 1) - 1; % Frequence maxi
 % Mapping pour la 64 QAM
 params.maps = genMapsQam64(params.BW.middleFreq, params);
 
+% Taille des clusters pour l'OSDM
+params.cluster1Size = 4;
+params.cluster2Size = 32;
+params.cluster3Size = params.nCoeffs - params.cluster1Size - params.cluster2Size;
 end
 
