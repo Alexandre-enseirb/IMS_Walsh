@@ -58,7 +58,7 @@ sendFlag.Data(1) = TX_MSG_SEND;
 halfBufferWindows = nBufferWindows/2;
 errorsCount = 0;
 bitsCount = 0;
-invalids = 0;
+invalidsCount = 0;
 disp("Start listening.");
 
 while errorsCount < commParams.nErrorsMinimum && bitsCount < commParams.nBitsMinimum
@@ -96,7 +96,7 @@ while errorsCount < commParams.nErrorsMinimum && bitsCount < commParams.nBitsMin
             
             errorsCount = errorsCount + err_cnt;
             bitsCount = bitsCount + bit_cnt;
-            invalids = invalids + invalidCoeffs;
+            invalidsCount = invalidsCount + invalidCoeffs;
             fprintf("Got BER: %d\n", BER(currentBER));
             
             currentBER = currentBER+1; 
@@ -107,6 +107,6 @@ while errorsCount < commParams.nErrorsMinimum && bitsCount < commParams.nBitsMin
 end
 txParams = getRadioParams('tx');
 save(sprintf("BER_analysis_Tx_%d_Rx_%d.mat", txParams.Gain, radioParams.Gain), ...
-    "BER", "errorsCount", "bitsCount");
+    "BER", "errorsCount", "bitsCount", "invalidsCount");
 end
 
