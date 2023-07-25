@@ -29,6 +29,12 @@ flag    = fullfile(tempdir, "radioRxflag");
 sendFlagFile = fullfile(tempdir, "radioTxflag");
 imageFilename = fullfile(tempdir, "sharedImage128x128");
 
+if ~isfile(imageFilename)
+    f = fopen(imageFilename, "w+");
+    fwrite(f, zeros(16384, 1, "uint8"));
+    fclose(f);
+end
+
 disp("Initialisation des fichiers.");
 % Mapping en memoire des fichiers
 mflag    = memmapfile(flag, "Format", "int8" , "Writable", true);

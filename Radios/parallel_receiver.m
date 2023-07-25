@@ -18,11 +18,19 @@ setPath();
 %% PARALLEL POOL CREATION
 
 flag    = fullfile(tempdir, "radioRxflag");
-
+sendFlagFile = fullfile(tempdir, "radioTxflag");
+mmap = fullfile(tempdir, "sharedImage128x128");
 
 f = fopen(flag, "w+");
 fwrite(f, int8(0), "int8");
 fclose(f);
 
+f = fopen(sendFlagFile, "w+");
+fwrite(f, int8(0), "int8");
+fclose(f);
+
 mflag    = memmapfile(flag, "Format", "int8" , "Writable", true);
-imgRxOSDM(mflag);
+sendFlag = memmapfile(sendFlagFile, "Format", "int8", "Writable", true);
+mmap = memmapfile(mmap, "Format", "uint8", "Writable", true);
+
+imgRxOSDMBERMmap(mflag, sendFlag, mmap);
