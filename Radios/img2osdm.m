@@ -1,130 +1,128 @@
 function [sig] = img2osdm(commParams, radioParams, walshParams, scrambler, mappingType, imgfile, datatype)
-
-    if ~exist("mappingType", "var")
-        mappingType="grayscale";
-    end
-
-    if ~exist("imgfile", "var")
-        imgfile = "Data/walsh.png";
-    end
-
-    if ~exist("datatype", "var")
-        datatype="real";
-    end
-
-    if ~ismember(datatype, ["real", "complex"])
-        error("Datatype has to be 'real' or 'complex'.");
-    end
-
-    if ~strcmpi(mappingType, "grayscale") && ~strcmpi(mappingType, "qpsk") && ~strcmpi(mappingType, "qam")
-        error("Unknown mapping type: %s.\nExpected 'grayscale', 'qpsk' or 'qam'.");
-    end
-
-    % Setup OSDM
-    carrier_name="";
-    M = 2; % pour le moment en QPSK
-    
-    targetDs    = walshParams.targetDs;         % Symbols/s
-    nSymbOSDMTx = 1;           % symbols per frame
-    targetTs    = 1/targetDs;          % s
-    Te          = 1/walshParams.fech; % s
-    fse         = ceil(targetTs/Te);   % no unit
-
-    nRefreshPerSymbol = fse/64;
-    if mod(nRefreshPerSymbol, 2) == 1 % Compensation des cas impairs
-        nRefreshPerSymbol = nRefreshPerSymbol + 1;
-        fse               = fse+64;
-    end
-
-    realTs           = fse*Te;
-    realDs           = ceil(1/realTs);
-    channelFrequency = 500e6;
-
-    totalDuration    = nextWalshLength(ceil((nSymbOSDMTx/realDs)*walshParams.fech), walshParams.nCoeffs); % signal duration
-    symbOSDMDuration = ceil(totalDuration/(walshParams.nCoeffs*walshParams.osr));
-    timeAxis         = (1:totalDuration)/walshParams.fech;
-
-    % Generation porteuses
-    cluster1Size = 4;
-    cluster2Size = 32;
-    cluster3Size = 64-cluster2Size-cluster1Size;
-
-    nQAMSymbPerOSDMSymb = 3;
-    nSymbTx             = nQAMSymbPerOSDMSymb*nSymbOSDMTx;
-    threshold           = 5e-3;
-
-   
+%IMG2OSDM convertit une image donnee en signal OSDM pour etre transmis par une radio USRP-B210.
+%
+%   [sig] = img2osdm(commParams, radioParams, walshParams)
+%
+%   [sig] = img2osdm(commParams, radioParams, walshParams, scrambler, mappingType, imgfile, datatype)
 
 
-    % Facteurs d'attenuation
-    attenuationFactor = 1;
+if ~exist("mappingType", "var")
+    mappingType="grayscale"; % Mapping par defaut
+end
 
-    walshParams.nullFrequencyIdx    = ceil(length(walshParams.freqAxis)/2);
-    walshParams.maxConformFrequency = find(walshParams.freqAxis > walshParams.fWalsh/2, 1);
-    if isempty(walshParams.maxConformFrequency)
-        walshParams.maxConformFrequency = walshParams.Nfft;
-    end
+if ~exist("imgfile", "var")
+    imgfile = "Data/walsh.png"; % Image par defaut
+end
 
-    [carriers, stats] = generateWalshCarrierFixedDurationClusterize(walshParams, 100, carrier_name, totalDuration, ...
-            [cluster1Size cluster2Size cluster3Size]);
+if ~exist("datatype", "var")
+    datatype="real"; % Type de donnees a l'envoi
+end
 
-    % Parametres "recherche de combinaisons"
-    carrier = carriers{1};
-    if strcmpi(datatype, "real")
-        carrierRefs = mean(real(carrier.walsh.Xw_b), 2);
-    else
-        carrierRefs = mean(carrier.walsh.Xw_b, 2);
-    end
-    cluster = carrier.Clusters{2};
-    nSymbolsCombinationsPerCoefficientsCombinations = 1024;
-    nCoeffsToSelect = 3;
-    nCombinationsToGenerate = length(commParams.OSDM.preambleIdx) + length(commParams.OSDM.grayscaleValues);
-    
-    coeffCarrier          = ones(1, symbOSDMDuration);
-    coeffCarrier(2:2:end) = 1j;
+if ~ismember(datatype, ["real", "complex"])
+    error("Datatype has to be 'real' or 'complex'.");
+end
 
-    stopAtMax = true;
+if ~strcmpi(mappingType, "grayscale") && ~strcmpi(mappingType, "qpsk") && ~strcmpi(mappingType, "qam")
+    error("Unknown mapping type: %s.\nExpected 'grayscale', 'qpsk' or 'qam'.");
+end
 
-    if ~isfile("WalshRadioCombinations.mat")
-        modulatedCoeffsWalsh = improvedCoefficientsSelectionv2(nCoeffsToSelect, ...
-            cluster, ...
-            carrier, ...
-            nSymbolsCombinationsPerCoefficientsCombinations, ...
-            nQAMSymbPerOSDMSymb, ...
-            nSymbOSDMTx, ...
-            nCombinationsToGenerate, ...
-            symbOSDMDuration, ...
-            coeffCarrier, ...
-            attenuationFactor, ...
-            stopAtMax, ...
-            walshParams);
-        save("WalshRadioCombinations.mat", "modulatedCoeffsWalsh");
-    else
-        load("WalshRadioCombinations.mat", "modulatedCoeffsWalsh");
-    end
-    rng(12);
-    V2C = initMappingSemantic([commParams.OSDM.preambleIdx commParams.OSDM.grayscaleValues], modulatedCoeffsWalsh);
-    C2V = dictionary(V2C.values, V2C.keys);
+%% Parametres OSDM
+carrierName="";  % fichier de sauvegarde 
 
-    img = imread(imgfile);
+targetDs    = walshParams.targetDs; % debit symbole vise, Symboles/s
+nSymbOSDMTx = 1; % duree de la conformite en symboles
+targetTs    = 1/targetDs; % temps symbole vise, en secondes
+Te          = 1/walshParams.fech; % Periode d'echantillonnage associee, en secondes
+fse         = ceil(targetTs/Te); % Frequence de surechantillonnage, sans unite
 
-    I = squeeze(img(:,:,1));
-   
-    sig = [];
-    for i=1:numel(I)
-        combination = V2C({[double(I(i))]});
-        sig = [sig; generateSigFromDictionary(combination, carrier.walsh.Xw_b, attenuationFactor, walshParams)];
-    end
-    
-    % Ajout du preambule
-    load bitSynchro.mat
+realTs = fse*Te; % Temps symbole en pratique, en secondes
+realDs = ceil(1/realTs); % Debit symbole en pratique, en secondes
 
-    preambleMod = pskmod(bitSynchro, commParams.ModOrderQPSK, commParams.PhaseOffsetQPSK, "gray", InputType="bit");
-    
-    sig = [preambleMod.'; sig];
-    % surechantillonnage et filtrage adapte
-    sig = upsample(sig, commParams.fse);
-    sig = conv(sig, commParams.g);
+totalDuration    = nextWalshLength(ceil((nSymbOSDMTx/realDs)*walshParams.fech), walshParams.nCoeffs); % Duree totale d'une trame OSDM en echantillons
+symbOSDMDuration = ceil(totalDuration/(walshParams.nCoeffs*walshParams.osr)); % Duree en "rafraichissements" d'un symbole OSDM
 
+nModulatedCoeffsPerOSDMSymb = 3; % Nombre de coefficients modules par symbole OSDM
+
+% Facteur d'attenuation (inutilise)
+attenuationFactor = 1; 
+
+walshParams.nullFrequencyIdx    = ceil(length(walshParams.freqAxis)/2); % Indice de la frequence nulle sur l'axe
+walshParams.maxConformFrequency = find(walshParams.freqAxis > walshParams.fWalsh/2, 1); % Indice de la frequence maximale pour laquelle on souhaite etre conforme
+if isempty(walshParams.maxConformFrequency) % S'il n'y a pas de maximum, on le fixe a la plus haute frequence de l'axe
+    walshParams.maxConformFrequency = walshParams.Nfft;
+end
+
+% Generation des coefficients de la porteuse
+carriers = generateWalshCarrierFixedDurationClusterize(walshParams, 100, carrierName, totalDuration, ...
+        [walshParams.cluster1Size walshParams.cluster2Size walshParams.cluster3Size]);
+carrier = carriers{1}; % Informations relatives a la porteuse (coefficients, allure temporelle...)
+cluster = carrier.Clusters{2}; % Cluster 2 de la porteuse (coefficients par periode de rafraichissement)
+
+%% Parametres "generation de combinaisons"
+nSymbolsCombinationsPerCoefficientsCombinations = 1024; % Pour un ensemble de coeffs donnes, nombre de combinaisons d'amplitudes a tester
+nCoeffsToSelect = nModulatedCoeffsPerOSDMSymb; % Nombre de coefficients a selectionner par combinaison
+nCombinationsToGenerate = length(commParams.OSDM.grayscaleValues); % Nombre de combinaisons a generer
+
+% "Porteuse complexe" utilisee si l'amplitude des coefficients modules est complexe
+% Permet de faire un filtrage de Hilbert au recepteur
+coeffCarrier          = ones(1, symbOSDMDuration);
+coeffCarrier(2:2:end) = 1j;
+
+% Indique si on souhaite s'arreter une fois toutes les combinaisons necessaires trouvees
+% `false` signifie que l'on veut generer autant de combinaisons que possible
+% `true` signifie que l'on veut uniquement le nombre de combinaisons demande
+stopAtMax = true;
+
+% Generation de nouvelles combinaisons s'il n'y en a pas de sauvegardees sur le disque
+if ~isfile("WalshRadioCombinations.mat")
+    [modulatedCoeffsWalsh, uniqueCombinations] = improvedCoefficientsSelectionv2(nCoeffsToSelect, ...
+        cluster, ...
+        carrier, ...
+        nSymbolsCombinationsPerCoefficientsCombinations, ...
+        nModulatedCoeffsPerOSDMSymb, ...
+        nSymbOSDMTx, ...
+        nCombinationsToGenerate, ...
+        symbOSDMDuration, ...
+        coeffCarrier, ...
+        attenuationFactor, ...
+        stopAtMax, ...
+        walshParams);
+    save("WalshRadioCombinations.mat", "modulatedCoeffsWalsh", "uniqueCombinations");
+else
+    load("WalshRadioCombinations.mat", "modulatedCoeffsWalsh");
+end
+
+% Generation du mapping Information - Combinaisons
+% Dans le cas present, l'information est l'intensite de chaque pixel, codee en entier non-signe sur 8 bits de (0 a 255)
+rng(12);
+V2C = initMappingSemantic(commParams.OSDM.grayscaleValues, modulatedCoeffsWalsh);
+
+% Lecture de la source d'information
+img = imread(imgfile);
+% Conversion en grayscale
+I = squeeze(img(:,:,1));
+
+% Generation du signal
+% TODO : Allouer le tableau a l'avance pour gagner du temps d'execution
+sig = [];
+for i=1:numel(I)
+    % Recuperation de la combinaison associee au pixel lu
+    combination = V2C({[double(I(i))]});
+    % Generation du signal avec la combinaison donnee
+    sig = [sig; generateSigFromDictionary(combination, carrier.walsh.Xw_b, attenuationFactor, walshParams)];
+end
+
+% Ajout du preambule
+load("bitSynchro.mat", "bitSynchro");
+
+preambleMod = pskmod(bitSynchro, commParams.ModOrderQPSK, commParams.PhaseOffsetQPSK, "gray", InputType="bit");
+
+sig = [preambleMod.'; sig];
+
+% surechantillonnage et filtrage adapte
+sigUpsampled = upsample(sig, commParams.fse);
+sigFiltered = conv(sigUpsampled, commParams.g);
+
+sig = sigFiltered;
 end
 
