@@ -37,4 +37,4 @@ mflag    = memmapfile(flag, "Format", "int8" , "Writable", true);
 sendFlag = memmapfile(sendFlagFile, "Format", "int8", "Writable", true);
 mmap = memmapfile(mmap, "Format", "uint8", "Writable", true);
 
-imgRxOSDMBERMmap(mflag, sendFlag, mmap);
+imgRxOSDM(mflag);%, sendFlag, mmap);

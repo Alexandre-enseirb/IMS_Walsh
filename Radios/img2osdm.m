@@ -78,7 +78,7 @@ function [sig] = img2osdm(commParams, radioParams, walshParams, scrambler, mappi
     cluster = carrier.Clusters{2};
     nSymbolsCombinationsPerCoefficientsCombinations = 1024;
     nCoeffsToSelect = 3;
-    nCombinationsToGenerate = length(commParams.OSDM.preambleIdx) + length(commParams.OSDM.grayscaleValues);
+    nCombinationsToGenerate = length(commParams.OSDM.grayscaleValues);
     
     coeffCarrier          = ones(1, symbOSDMDuration);
     coeffCarrier(2:2:end) = 1j;
@@ -103,7 +103,7 @@ function [sig] = img2osdm(commParams, radioParams, walshParams, scrambler, mappi
         load("WalshRadioCombinations.mat", "modulatedCoeffsWalsh");
     end
     rng(12);
-    V2C = initMappingSemantic([commParams.OSDM.preambleIdx commParams.OSDM.grayscaleValues], modulatedCoeffsWalsh);
+    V2C = initMappingSemantic(commParams.OSDM.grayscaleValues, modulatedCoeffsWalsh);
     C2V = dictionary(V2C.values, V2C.keys);
 
     img = imread(imgfile);

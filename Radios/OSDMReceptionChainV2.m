@@ -32,7 +32,7 @@ setPath();
 %% CHOIX DU DEBUT DU SIGNAL
 
 load("bitSynchro.mat", "bitSynchro");
-file = "OSDM_new_decoder.mat";
+file = "OSDM_img_rx_clock_pps_rrc_Complex_preamble_QPSK.mat";
 
 load(file, "buffer1", "buffer2", "commParams");
 
