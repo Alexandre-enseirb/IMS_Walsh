@@ -21,17 +21,23 @@ flag    = fullfile(tempdir, "radioRxflag");
 sendFlagFile = fullfile(tempdir, "radioTxflag");
 mmap = fullfile(tempdir, "sharedImage128x128");
 
-f = fopen(flag, "w+");
-fwrite(f, int8(0), "int8");
-fclose(f);
+if ~isfile(flag)
+    f = fopen(flag, "w+");
+    fwrite(f, int8(0), "int8");
+    fclose(f);
+end
 
-f = fopen(sendFlagFile, "w+");
-fwrite(f, int8(0), "int8");
-fclose(f);
+if ~isfile(sendFlagFile)
+    f = fopen(sendFlagFile, "w+");
+    fwrite(f, int8(0), "int8");
+    fclose(f);
+end
 
-f = fopen(mmap, "w+");
-fwrite(f, uint8(zeros(1, 16384)), "uint8");
-fclose(f);
+if ~isfile(mmap)
+    f = fopen(mmap, "w+");
+    fwrite(f, uint8(zeros(1, 16384)), "uint8");
+    fclose(f);
+end
 
 mflag    = memmapfile(flag, "Format", "int8" , "Writable", true);
 sendFlag = memmapfile(sendFlagFile, "Format", "int8", "Writable", true);

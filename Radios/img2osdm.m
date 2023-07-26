@@ -103,7 +103,7 @@ function [sig] = img2osdm(commParams, radioParams, walshParams, scrambler, mappi
         load("WalshRadioCombinations.mat", "modulatedCoeffsWalsh");
     end
     rng(12);
-    V2C = initMappingSemantic([commParams.OSDM.preambleIdx commParams.OSDM.grayscaleValues], modulatedCoeffsWalsh);
+    V2C = initMappingSemantic(commParams.OSDM.grayscaleValues, modulatedCoeffsWalsh);
     C2V = dictionary(V2C.values, V2C.keys);
 
     img = imread(imgfile);
