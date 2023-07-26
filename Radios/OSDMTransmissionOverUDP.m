@@ -25,9 +25,13 @@ setPath();
 
 load bitSynchro.mat; % Preamble
 
-flag    = fullfile(tempdir, "radioRxflag");
+targetIP = "169.254.158.40";
+myIP = "169.254.103.193";
+port = 8080;
 
-mflag    = memmapfile(flag, "Format", "int8" , "Writable", true);
+udpPort = udpport("IPV4", "LocalHost", myIP, "LocalPort", port);
+
+
 disp("Generation des parametres")
 commParams = getCommParamsForWalsh("tx");
 radioParams = getRadioParams("tx");
@@ -87,9 +91,10 @@ if strcmpi(radioParams.ClockSource, "external")
     end
 end
 disp("Envoi");
-mflag.Data(1) = uint8(1);
+write(udpPort, 1, "uint8", targetIP, port);
+% data = read(udpPort, 1, "uint8");
+%mflag.Data(1) = uint8(1);
 symbIdx = 1;
-%%
 for i=1:commParams.nRadioFramesTxOSDM
 
     startIdx = (i-1) * commParams.samplesPerFrame + 1;
@@ -100,7 +105,6 @@ for i=1:commParams.nRadioFramesTxOSDM
     if underrun
         disp(symbIdx);
     end
-
 end
 
-mflag.Data(1) = uint8(0);
+write(udpPort, 0, "uint8", targetIP, port);
