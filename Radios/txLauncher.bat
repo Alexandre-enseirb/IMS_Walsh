@@ -8,7 +8,7 @@ REM (ex : `parallel_transmitter`) SANS l'extension de fichier.
 REM Sinon, MATLAB va etre perdu et lancer une erreur.
 
 REM Ne pas mettre de guillemets autour du nom du fichier non plus
-set programName=img_transmitter
+set programName=OSDMTransmitter
 
 REM lance MATLAB sans affichages pour economiser des ressources et utiliser au
 REM mieux les radios

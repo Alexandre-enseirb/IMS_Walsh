@@ -27,7 +27,7 @@ if ~strcmpi(mappingType, "grayscale") && ~strcmpi(mappingType, "qpsk") && ~strcm
 end
 
 %% Parametres OSDM
-carrierName="";  % fichier de sauvegarde 
+carrierName="";  % fichier de sauvegarde
 
 targetDs    = walshParams.targetDs; % debit symbole vise, Symboles/s
 nSymbOSDMTx = 1; % duree de la conformite en symboles
@@ -44,7 +44,7 @@ symbOSDMDuration = ceil(totalDuration/(walshParams.nCoeffs*walshParams.osr)); % 
 nModulatedCoeffsPerOSDMSymb = 3; % Nombre de coefficients modules par symbole OSDM
 
 % Facteur d'attenuation (inutilise)
-attenuationFactor = 1; 
+attenuationFactor = 1;
 
 walshParams.nullFrequencyIdx    = ceil(length(walshParams.freqAxis)/2); % Indice de la frequence nulle sur l'axe
 walshParams.maxConformFrequency = find(walshParams.freqAxis > walshParams.fWalsh/2, 1); % Indice de la frequence maximale pour laquelle on souhaite etre conforme
@@ -125,4 +125,3 @@ sigFiltered = conv(sigUpsampled, commParams.g);
 
 sig = sigFiltered;
 end
-
