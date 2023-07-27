@@ -1,0 +1,6 @@
+function [] = generateRandomImage(mmap, sz)
+%GENERATERANDOMIMAGE genere une image random et la stocke dans l'espace de memoire partagee mmap
+%
+%   [] = generateRandomImage(mmap, size)
+
+[h,w] = sz;
