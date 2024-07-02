@@ -22,7 +22,7 @@ The repository is split into four "subprojects" and a library folder.
 
 ### UHD
 
-In order to use the USRP radios, the UHD driver is required. Please refer Ettus' [installation manual](https://files.ettus.com/manual/page_install.html) for more informations on how to install it.
+In order to use the USRP radios, the UHD driver is required. Please refer to Ettus' [installation manual](https://files.ettus.com/manual/page_install.html) for more informations on how to install it.
 
 ## How to Use
 
@@ -65,4 +65,6 @@ $ bash matlabScript.sh OSDMTransmitter rx_logs.txt
 
 ## Common Issues
 
-WIP
+- During the project, some variables were renamed in the libraries to account for Matlab's naming convention. These changes did not apply in every script. For instance, older scripts may refer to the frequency axis for plots as `params.freq_axis` instead of `params.freqAxis`. These can safely be corrected by using bulk-replace.
+- In some places, a fft was used instead of a periodogram to compute the power spectrum of the signal. These should be changed, as this method is not precise due to how fft works in Matlab and may lead to imprecise or wrong results.
+- Depending on the power of your machine, you may get some overruns or underruns using the USRP version of the scripts. In order to avoid these, the `MasterClockRate` of the radios has to be reduced to a value that allows you to generate the signal timely. 
